@@ -1,4 +1,4 @@
-module HeatMap exposing (HeatMap(..), location, index, cellAtIndex, setValue, nextCellValue, updateCell, averageAt, randomHeatMap)
+module HeatMap exposing (HeatMap(..), location, index, cellAtIndex, setValue, nextCellValue, updateCell, updateCells, averageAt, randomHeatMap)
 
 {-| This library is just a test.  I repeat: a test!
 
@@ -109,7 +109,14 @@ updateCell beta (i,j) heatMap  =
     setValue heatMap (i,j) (nextCellValue beta (i,j) heatMap)
 
 
-
+updateCells : Float -> HeatMap -> HeatMap
+updateCells beta heatMap =
+    let
+      (HeatMap (nRows, nCols ) _) = heatMap
+      n = nRows * nCols
+      indices = List.map (index (nRows, nCols)) (List.range 0 (n - 1))
+    in
+      List.foldl (\(i,j) acc -> setValue acc (i,j) (nextCellValue beta (i,j) heatMap)) heatMap indices
 
 ---
 --- RNG
