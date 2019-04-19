@@ -48,6 +48,7 @@ type Msg
     | Step
     | Tick Posix
     | AdvanceAppState
+    | Reset
 
 
 type alias Flags =
@@ -60,8 +61,8 @@ init flags =
       , output ="Test"
       , counter = 0
       , appState = Ready
-      , beta = 0.5
-      , betaString = "0.5"
+      , beta = 0.1
+      , betaString = "0.1"
       , heatMap = HeatMap.randomHeatMap (50, 50)
 
       }
@@ -80,7 +81,11 @@ update msg model =
             ( model, Cmd.none )
 
         InputBeta str ->
-            ( { model | input = str, output = str }, Cmd.none )
+            case String.toFloat str of
+                Nothing ->
+                  ( { model | betaString = str }, Cmd.none )
+                Just beta_ ->
+                   ( { model | betaString = str, beta = beta_ }, Cmd.none )
 
         Step ->
             ( { model | counter = model.counter + 1, heatMap = HeatMap.updateCells model.beta model.heatMap }, Cmd.none )
@@ -101,6 +106,9 @@ update msg model =
                       Paused -> Running
             in
               ({ model | appState = nextAppState }, Cmd.none)
+
+        Reset ->
+            ({model | counter = 0, appState = Ready, heatMap = HeatMap.randomHeatMap (50, 50)} , Cmd.none)
 
 
 
@@ -123,15 +131,17 @@ mainColumn model =
             [ title "Diffusion of Heat"
             , el [] (HeatMap.renderAsHtml model.heatMap |> Element.html)
             , row [spacing 18 ] [
-              runButton model
+              resetButton
+              , runButton model
               , row [spacing 8] [stepButton, counterDisplay model]
               , inputBeta model]
+            , el [Font.size 14, centerX] (text "Run with 0 < beta < 1.0")
             ]
         ]
 
 counterDisplay : Model -> Element Msg
 counterDisplay model =
-    el [Font.size 18](text <| String.fromInt model.counter)
+    el [Font.size 18, width (px 30)](text <| String.fromInt model.counter)
 
 
 title : String -> Element msg
@@ -144,14 +154,15 @@ outputDisplay model =
     row [ centerX ]
         [ text model.output ]
 
+buttonFontSize = 16
 
 inputBeta : Model -> Element Msg
 inputBeta model =
-    Input.text [width (px 60), Font.size 16]
+    Input.text [width (px 60), Font.size buttonFontSize]
         { onChange = InputBeta
         , text = model.betaString
         , placeholder = Nothing
-        , label = Input.labelLeft [] <| el [Font.size 18, moveDown 12] (text "beta ")
+        , label = Input.labelLeft [] <| el [Font.size buttonFontSize, moveDown 12] (text "beta ")
         }
 
 
@@ -166,10 +177,24 @@ stepButton =
 
 runButton : Model -> Element Msg
 runButton model =
+    row [ centerX, width (px 80) ]
+        [ Input.button (buttonStyle ++ [ activeBackgroundColor model])
+            { onPress = Just AdvanceAppState
+            , label = el [ centerX, centerY, width (px 60) ] (text <| appStateAsString model.appState)
+            }
+        ]
+
+activeBackgroundColor model =
+    case model.appState of
+        Running -> Background.color (Element.rgb 0.65 0 0)
+        _ -> Background.color (Element.rgb 0 0 0)
+
+resetButton : Element Msg
+resetButton  =
     row [ centerX ]
         [ Input.button buttonStyle
-            { onPress = Just AdvanceAppState
-            , label = el [ centerX, centerY ] (text <| appStateAsString model.appState)
+            { onPress = Just Reset
+            , label = el [ centerX, centerY ] (text <| "Reset")
             }
         ]
 
@@ -198,6 +223,7 @@ buttonStyle =
     [ Background.color (rgb255 40 40 40)
     , Font.color (rgb255 255 255 255)
     , paddingXY 15 8
+    , Font.size buttonFontSize
     ]
 
 
