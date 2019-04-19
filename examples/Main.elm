@@ -12,7 +12,12 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
 import Element.Input as Input
-import Library
+import HeatMap exposing(HeatMap)
+import Time exposing (Posix)
+
+
+tickInterval : Float
+tickInterval = 333
 
 
 main =
@@ -27,13 +32,22 @@ main =
 type alias Model =
     { input : String
     , output : String
+    , counter : Int
+    , appState : AppState
+    , beta : Float
+    , betaString : String
+    , heatMap : HeatMap
     }
 
 
+type AppState = Ready | Running | Paused
+
 type Msg
     = NoOp
-    | InputText String
-    | ReverseText
+    | InputBeta String
+    | Step
+    | Tick Posix
+    | AdvanceAppState
 
 
 type alias Flags =
@@ -42,15 +56,21 @@ type alias Flags =
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    ( { input = Library.message
-      , output = Library.message
+    ( { input = "Test"
+      , output ="Test"
+      , counter = 0
+      , appState = Ready
+      , beta = 0.5
+      , betaString = "0.5"
+      , heatMap = HeatMap.randomHeatMap (50, 50)
+
       }
     , Cmd.none
     )
 
 
 subscriptions model =
-    Sub.none
+    Time.every tickInterval Tick
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -59,11 +79,30 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
-        InputText str ->
+        InputBeta str ->
             ( { model | input = str, output = str }, Cmd.none )
 
-        ReverseText ->
-            ( { model | output = model.output |> String.reverse |> String.toLower }, Cmd.none )
+        Step ->
+            ( { model | counter = model.counter + 1, heatMap = HeatMap.updateCells model.beta model.heatMap }, Cmd.none )
+
+        Tick t ->
+            case model.appState == Running of
+                True ->
+                   ( { model | counter = model.counter + 1, heatMap = HeatMap.updateCells model.beta model.heatMap }, Cmd.none )
+                False ->
+                    ( model, Cmd.none)
+
+        AdvanceAppState ->
+            let
+                nextAppState =
+                   case model.appState of
+                      Ready -> Running
+                      Running -> Paused
+                      Paused -> Running
+            in
+              ({ model | appState = nextAppState }, Cmd.none)
+
+
 
 
 
@@ -81,12 +120,18 @@ mainColumn : Model -> Element Msg
 mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
-            [ title "Starter app"
-            , inputText model
-            , appButton
-            , outputDisplay model
+            [ title "Diffusion of Heat"
+            , el [] (HeatMap.renderAsHtml model.heatMap |> Element.html)
+            , row [spacing 18 ] [
+              runButton model
+              , row [spacing 8] [stepButton, counterDisplay model]
+              , inputBeta model]
             ]
         ]
+
+counterDisplay : Model -> Element Msg
+counterDisplay model =
+    el [Font.size 18](text <| String.fromInt model.counter)
 
 
 title : String -> Element msg
@@ -100,26 +145,41 @@ outputDisplay model =
         [ text model.output ]
 
 
-inputText : Model -> Element Msg
-inputText model =
-    Input.text []
-        { onChange = InputText
-        , text = model.input
+inputBeta : Model -> Element Msg
+inputBeta model =
+    Input.text [width (px 60), Font.size 16]
+        { onChange = InputBeta
+        , text = model.betaString
         , placeholder = Nothing
-        , label = Input.labelLeft [] <| el [] (text "")
+        , label = Input.labelLeft [] <| el [Font.size 18, moveDown 12] (text "beta ")
         }
 
 
-appButton : Element Msg
-appButton =
+stepButton : Element Msg
+stepButton =
     row [ centerX ]
         [ Input.button buttonStyle
-            { onPress = Just ReverseText
-            , label = el [ centerX, centerY ] (text "Reverse")
+            { onPress = Just Step
+            , label = el [ centerX, centerY ] (text "Step")
+            }
+        ]
+
+runButton : Model -> Element Msg
+runButton model =
+    row [ centerX ]
+        [ Input.button buttonStyle
+            { onPress = Just AdvanceAppState
+            , label = el [ centerX, centerY ] (text <| appStateAsString model.appState)
             }
         ]
 
 
+appStateAsString : AppState -> String
+appStateAsString appState =
+    case appState of
+        Ready -> "Ready"
+        Running -> "Running"
+        Paused -> "Paused"
 
 --
 -- STYLE

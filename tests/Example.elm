@@ -24,6 +24,26 @@ suite =
                         in
                             Expect.equal c 8.0
 
+                , test "classify West edge cell" <|
+                     \_ ->
+                         classifyCell heatMap (1,0) |> Expect.equal Edge
+
+               , test "classify East edge cell" <|
+                     \_ ->
+                         classifyCell heatMap (1,2) |> Expect.equal Edge
+
+
+              , test "classify Horth edge cell" <|
+                     \_ ->
+                         classifyCell heatMap (0,1) |> Expect.equal Edge
+
+               , test "classify South edge cell" <|
+                     \_ ->
+                         classifyCell heatMap (2,1) |> Expect.equal Edge
+
+
+
+
                 , test "average temperature at an interior cell" <|
                     \_ ->
                         averageAt heatMap (1,1)  |> Expect.within (Absolute epsilon) 4.0

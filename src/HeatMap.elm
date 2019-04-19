@@ -1,4 +1,4 @@
-module HeatMap exposing (HeatMap(..), location, index, cellAtIndex, setValue, nextCellValue, updateCell, updateCells, averageAt, randomHeatMap)
+module HeatMap exposing (HeatMap(..), classifyCell, CellType(..), location, index, cellAtIndex, setValue, nextCellValue, updateCell, updateCells, averageAt, randomHeatMap, renderAsHtml)
 
 {-| This library is just a test.  I repeat: a test!
 
@@ -9,6 +9,9 @@ module HeatMap exposing (HeatMap(..), location, index, cellAtIndex, setValue, ne
 import Array exposing(Array)
 import Random
 import List.Extra
+import Svg exposing(Svg, svg, rect, g)
+import Svg.Attributes as SA
+import Html exposing(Html)
 
 type HeatMap = HeatMap (Int, Int) (Array Float)
 
@@ -99,9 +102,11 @@ randomHeatMap (r,c) =
 nextCellValue : Float ->(Int, Int) -> HeatMap ->  Float
 nextCellValue beta (i,j) heatMap  =
     let
-        currentCellValue = cellAtIndex (i,j) heatMap
+          currentCellValue = cellAtIndex (i,j) heatMap
     in
-        (1 - beta) * currentCellValue + beta * (averageAt heatMap (i,j))
+    case classifyCell heatMap (i,j) == Interior of
+        False ->   currentCellValue
+        True ->  (1 - beta) * currentCellValue + beta * (averageAt heatMap (i,j))
 
 
 updateCell : Float -> (Int, Int) -> HeatMap ->  HeatMap
@@ -109,14 +114,18 @@ updateCell beta (i,j) heatMap  =
     setValue heatMap (i,j) (nextCellValue beta (i,j) heatMap)
 
 
+indices : HeatMap -> List (Int, Int)
+indices (HeatMap (nRows, nCols ) _) =
+  let
+      n = nRows * nCols
+  in
+     List.map (index (nRows, nCols)) (List.range 0 (n - 1))
+
+
 updateCells : Float -> HeatMap -> HeatMap
 updateCells beta heatMap =
-    let
-      (HeatMap (nRows, nCols ) _) = heatMap
-      n = nRows * nCols
-      indices = List.map (index (nRows, nCols)) (List.range 0 (n - 1))
-    in
-      List.foldl (\(i,j) acc -> setValue acc (i,j) (nextCellValue beta (i,j) heatMap)) heatMap indices
+      List.foldl (\(i,j) acc -> setValue acc (i,j) (nextCellValue beta (i,j) heatMap)) heatMap (indices heatMap)
+
 
 ---
 --- RNG
@@ -148,3 +157,50 @@ makeSeed k =
 floatSequence_ : Int -> Random.Seed -> (Float, Float) -> (List Float, Random.Seed)
 floatSequence_ n seed (a,b) =
     Random.step (gen n (a,b)) seed
+
+
+--
+-- RENDER GRID
+--
+
+
+renderAsHtml : HeatMap -> Html msg
+renderAsHtml heatMap =
+    let
+      (nr, nc) = dimensions heatMap
+      cellSize = 400/(toFloat nr)
+    in
+    svg
+        [  SA.height <| String.fromFloat 400
+           , SA.width <| String.fromFloat 400
+        , SA.viewBox <| "0 0 400 400"
+        ]
+        [ renderAsSvg cellSize heatMap]
+
+renderAsSvg : Float -> HeatMap -> Svg msg
+renderAsSvg cellSize heatMap =
+       indices heatMap
+         |> List.map (renderCell cellSize heatMap)
+         |> g []
+
+
+renderCell : Float -> HeatMap -> (Int, Int)  -> Svg msg
+renderCell cellSize heatMap (i, j)  =
+    let
+         red = 255.0 * (cellAtIndex (i,j) heatMap)
+         color = "rgb(" ++ String.fromFloat red ++ ", 0, 0)"
+     in
+       gridRect cellSize color (i, j)
+
+gridRect : Float -> String -> (Int, Int)  -> Svg msg
+gridRect size color (row, col) =
+    rect
+        [ SA.width <| String.fromFloat size
+        , SA.height <| String.fromFloat size
+        , SA.x <| String.fromFloat <| size*(toFloat col)
+        , SA.y <| String.fromFloat <| size*(toFloat row)
+        , SA.fill color
+        --, SA.strokeWidth "1"
+       -- , SA.stroke "rgb(25, 55, 125)"
+        ]
+        []
