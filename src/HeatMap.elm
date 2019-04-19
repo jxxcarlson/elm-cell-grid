@@ -1,4 +1,4 @@
-module HeatMap exposing (HeatMap(..), location, index, cellAtIndex, setValue, averageAt, randomHeatMap)
+module HeatMap exposing (HeatMap(..), location, index, cellAtIndex, setValue, nextCellValue, updateCell, averageAt, randomHeatMap)
 
 {-| This library is just a test.  I repeat: a test!
 
@@ -96,12 +96,20 @@ randomHeatMap (r,c) =
        HeatMap (r,c) (Array.fromList <| floatSequence (r * c) 0 (0,1))
 
 
-nextCellValue : Float -> HeatMap -> (Int, Int) -> Float
-nextCellValue beta heatMap (i,j) =
+nextCellValue : Float ->(Int, Int) -> HeatMap ->  Float
+nextCellValue beta (i,j) heatMap  =
     let
         currentCellValue = cellAtIndex (i,j) heatMap
     in
         (1 - beta) * currentCellValue + beta * (averageAt heatMap (i,j))
+
+
+updateCell : Float -> (Int, Int) -> HeatMap ->  HeatMap
+updateCell beta (i,j) heatMap  =
+    setValue heatMap (i,j) (nextCellValue beta (i,j) heatMap)
+
+
+
 
 ---
 --- RNG

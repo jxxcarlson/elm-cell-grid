@@ -38,5 +38,21 @@ suite =
 
                 , test "set cell value" <|
                     \_ ->
-                        setValue heatMap (1,1) 0 |> cellAtIndex (1,1) |> Expect.within (Absolute epsilon) 0.0                ]
+                        setValue heatMap (1,1) 0 |> cellAtIndex (1,1) |> Expect.within (Absolute epsilon) 0.0
+
+                , test "compute next temperature value" <|
+                    \_ ->
+                        setValue heatMap (1,1) 0
+                          |> nextCellValue 0.5 (1,1)
+                          |> Expect.within (Absolute epsilon) 2.0
+
+                , test "update array with next temperature value" <|
+                    \_ ->
+                        setValue heatMap (1,1) 0
+                          |> updateCell 0.5 (1,1)
+                          |> cellAtIndex (1,1)
+                          |> Expect.within (Absolute epsilon) 2.0
+
+
+              ]
             ]
