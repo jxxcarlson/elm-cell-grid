@@ -14,6 +14,7 @@ import Element.Font as Font
 import Element.Input as Input
 import CellGrid exposing (CellGrid)
 import Time exposing (Posix)
+import TemperatureField
 
 
 tickInterval : Float
