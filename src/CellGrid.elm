@@ -1,6 +1,6 @@
-module HeatMap
+module CellGrid
     exposing
-        ( HeatMap(..)
+        ( CellGrid(..)
         , classifyCell
         , CellType(..)
         , location
@@ -29,21 +29,21 @@ import Svg.Attributes as SA
 import Html exposing (Html)
 
 
-type HeatMap a
+type CellGrid a
     = HeatMap ( Int, Int ) (Array a)
 
 
-rows : HeatMap a -> Int
+rows : CellGrid a -> Int
 rows (HeatMap ( rows_, _ ) _) =
     rows_
 
 
-cols : HeatMap a -> Int
+cols : CellGrid a -> Int
 cols (HeatMap ( r_, cols_ ) _) =
     cols_
 
 
-dimensions : HeatMap a -> ( Int, Int )
+dimensions : CellGrid a -> ( Int, Int )
 dimensions (HeatMap idx _) =
     idx
 
@@ -66,7 +66,7 @@ index ( nRows, nCols ) n =
     ( n // nCols, modBy nRows n )
 
 
-cellAtIndex : ( Int, Int ) -> HeatMap a -> Maybe a
+cellAtIndex : ( Int, Int ) -> CellGrid a -> Maybe a
 cellAtIndex ( i, j ) heatMap =
     let
         (HeatMap ( nRows, _ ) array) =
@@ -75,7 +75,7 @@ cellAtIndex ( i, j ) heatMap =
         Array.get (location nRows ( i, j )) array
 
 
-setValue : HeatMap a -> ( Int, Int ) -> a -> HeatMap a
+setValue : CellGrid a -> ( Int, Int ) -> a -> CellGrid a
 setValue (HeatMap ( nRows, nCols ) values) ( i, j ) value =
     let
         k =
@@ -90,7 +90,7 @@ type CellType
     | Interior
 
 
-classifyCell : HeatMap a -> ( Int, Int ) -> CellType
+classifyCell : CellGrid a -> ( Int, Int ) -> CellType
 classifyCell heatMap ( i, j ) =
     let
         ( nRows, nCols ) =
@@ -119,7 +119,7 @@ classifyCell heatMap ( i, j ) =
                     Edge
 
 
-averageAt : HeatMap Float -> ( Int, Int ) -> Float
+averageAt : CellGrid Float -> ( Int, Int ) -> Float
 averageAt heatMap ( i, j ) =
     let
         east =
@@ -148,12 +148,12 @@ averageAt heatMap ( i, j ) =
         (east + west + north + south) / denominator
 
 
-randomHeatMap : ( Int, Int ) -> HeatMap Float
+randomHeatMap : ( Int, Int ) -> CellGrid Float
 randomHeatMap ( r, c ) =
     HeatMap ( r, c ) (Array.fromList <| floatSequence (r * c) 0 ( 0, 1 ))
 
 
-nextCellValue : Float -> ( Int, Int ) -> HeatMap Float -> Float
+nextCellValue : Float -> ( Int, Int ) -> CellGrid Float -> Float
 nextCellValue beta ( i, j ) heatMap =
     let
         currentCellValue =
@@ -167,12 +167,12 @@ nextCellValue beta ( i, j ) heatMap =
                 (1 - beta) * currentCellValue + beta * (averageAt heatMap ( i, j ))
 
 
-updateCell : Float -> ( Int, Int ) -> HeatMap Float -> HeatMap Float
+updateCell : Float -> ( Int, Int ) -> CellGrid Float -> CellGrid Float
 updateCell beta ( i, j ) heatMap =
     setValue heatMap ( i, j ) (nextCellValue beta ( i, j ) heatMap)
 
 
-indices : HeatMap a -> List ( Int, Int )
+indices : CellGrid a -> List ( Int, Int )
 indices (HeatMap ( nRows, nCols ) _) =
     let
         n =
@@ -181,7 +181,7 @@ indices (HeatMap ( nRows, nCols ) _) =
         List.map (index ( nRows, nCols )) (List.range 0 (n - 1))
 
 
-updateCells : Float -> HeatMap Float -> HeatMap Float
+updateCells : Float -> CellGrid Float -> CellGrid Float
 updateCells beta heatMap =
     List.foldl (\( i, j ) acc -> setValue acc ( i, j ) (nextCellValue beta ( i, j ) heatMap)) heatMap (indices heatMap)
 
@@ -227,7 +227,7 @@ floatSequence_ n seed ( a, b ) =
 --
 
 
-renderAsHtml : HeatMap Float -> Html msg
+renderAsHtml : CellGrid Float -> Html msg
 renderAsHtml heatMap =
     let
         ( nr, nc ) =
@@ -244,14 +244,14 @@ renderAsHtml heatMap =
             [ renderAsSvg cellSize heatMap ]
 
 
-renderAsSvg : Float -> HeatMap Float -> Svg msg
+renderAsSvg : Float -> CellGrid Float -> Svg msg
 renderAsSvg cellSize heatMap =
     indices heatMap
         |> List.map (renderCell cellSize heatMap)
         |> g []
 
 
-renderCell : Float -> HeatMap Float -> ( Int, Int ) -> Svg msg
+renderCell : Float -> CellGrid Float -> ( Int, Int ) -> Svg msg
 renderCell cellSize heatMap ( i, j ) =
     let
         red =

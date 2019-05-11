@@ -12,7 +12,7 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
 import Element.Input as Input
-import HeatMap exposing (HeatMap)
+import CellGrid exposing (CellGrid)
 import Time exposing (Posix)
 
 
@@ -37,7 +37,7 @@ type alias Model =
     , appState : AppState
     , beta : Float
     , betaString : String
-    , heatMap : HeatMap Float
+    , heatMap : CellGrid Float
     }
 
 
@@ -68,7 +68,7 @@ init flags =
       , appState = Ready
       , beta = 0.1
       , betaString = "0.1"
-      , heatMap = HeatMap.randomHeatMap ( 50, 50 )
+      , heatMap = CellGrid.randomHeatMap ( 50, 50 )
       }
     , Cmd.none
     )
@@ -93,12 +93,12 @@ update msg model =
                     ( { model | betaString = str, beta = beta_ }, Cmd.none )
 
         Step ->
-            ( { model | counter = model.counter + 1, heatMap = HeatMap.updateCells model.beta model.heatMap }, Cmd.none )
+            ( { model | counter = model.counter + 1, heatMap = CellGrid.updateCells model.beta model.heatMap }, Cmd.none )
 
         Tick t ->
             case model.appState == Running of
                 True ->
-                    ( { model | counter = model.counter + 1, heatMap = HeatMap.updateCells model.beta model.heatMap }, Cmd.none )
+                    ( { model | counter = model.counter + 1, heatMap = CellGrid.updateCells model.beta model.heatMap }, Cmd.none )
 
                 False ->
                     ( model, Cmd.none )
@@ -119,7 +119,7 @@ update msg model =
                 ( { model | appState = nextAppState }, Cmd.none )
 
         Reset ->
-            ( { model | counter = 0, appState = Ready, heatMap = HeatMap.randomHeatMap ( 50, 50 ) }, Cmd.none )
+            ( { model | counter = 0, appState = Ready, heatMap = CellGrid.randomHeatMap ( 50, 50 ) }, Cmd.none )
 
 
 
@@ -138,7 +138,7 @@ mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
             [ title "Diffusion of Heat"
-            , el [] (HeatMap.renderAsHtml model.heatMap |> Element.html)
+            , el [] (CellGrid.renderAsHtml model.heatMap |> Element.html)
             , row [ spacing 18 ]
                 [ resetButton
                 , runButton model

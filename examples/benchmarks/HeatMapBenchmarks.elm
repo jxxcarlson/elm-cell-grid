@@ -1,7 +1,7 @@
 module HeatMapBenchmarks exposing (..)
 
 import Benchmark exposing(..)
-import HeatMap exposing(..)
+import CellGrid exposing(..)
 import Array
 
 
@@ -10,7 +10,7 @@ suite =
     let
          heatMap = randomHeatMap (8,8)
     in
-    describe "HeatMap"
+    describe "CellGrid"
         [ -- nest as many descriptions as you like
           describe "update"
             [ benchmark "Run update on 5x5 array" <|

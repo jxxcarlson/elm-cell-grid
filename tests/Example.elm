@@ -4,7 +4,7 @@ import Expect exposing (..)
 import Fuzz exposing (Fuzzer, int, list, string)
 import Test exposing (..)
 
-import HeatMap exposing(..)
+import CellGrid exposing(..)
 import Array exposing(Array)
 
 suite : Test
@@ -15,12 +15,12 @@ suite =
         epsilon = 0.0000001
 
     in
-    describe "The HeatMap module"
+    describe "The CellGrid module"
             [ describe "Access functions" -- Nest as many descriptions as you like.
                 [ test "cellAtIndex"  <|
                     \_ ->
                         let
-                            c = HeatMap.cellAtIndex (2,2) heatMap
+                            c = CellGrid.cellAtIndex (2,2) heatMap
                         in
                             Expect.equal c 8.0
 
