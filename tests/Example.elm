@@ -11,7 +11,7 @@ suite : Test
 suite =
     let
         cellList = List.range 0 10 |> List.map toFloat
-        heatMap = HeatMap (3,3) (Array.fromList cellList)
+        heatMap = CellGrid (3,3) (Array.fromList cellList)
         epsilon = 0.0000001
 
     in

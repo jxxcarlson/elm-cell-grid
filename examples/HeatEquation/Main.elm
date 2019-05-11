@@ -69,7 +69,7 @@ init flags =
       , appState = Ready
       , beta = 0.1
       , betaString = "0.1"
-      , heatMap = CellGrid.randomHeatMap ( 50, 50 )
+      , heatMap = TemperatureField.randomHeatMap ( 50, 50 )
       }
     , Cmd.none
     )
@@ -94,12 +94,12 @@ update msg model =
                     ( { model | betaString = str, beta = beta_ }, Cmd.none )
 
         Step ->
-            ( { model | counter = model.counter + 1, heatMap = CellGrid.updateCells model.beta model.heatMap }, Cmd.none )
+            ( { model | counter = model.counter + 1, heatMap = TemperatureField.updateCells model.beta model.heatMap }, Cmd.none )
 
         Tick t ->
             case model.appState == Running of
                 True ->
-                    ( { model | counter = model.counter + 1, heatMap = CellGrid.updateCells model.beta model.heatMap }, Cmd.none )
+                    ( { model | counter = model.counter + 1, heatMap = TemperatureField.updateCells model.beta model.heatMap }, Cmd.none )
 
                 False ->
                     ( model, Cmd.none )
@@ -120,7 +120,7 @@ update msg model =
                 ( { model | appState = nextAppState }, Cmd.none )
 
         Reset ->
-            ( { model | counter = 0, appState = Ready, heatMap = CellGrid.randomHeatMap ( 50, 50 ) }, Cmd.none )
+            ( { model | counter = 0, appState = Ready, heatMap = TemperatureField.randomHeatMap ( 50, 50 ) }, Cmd.none )
 
 
 

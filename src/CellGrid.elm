@@ -7,11 +7,7 @@ module CellGrid
         , index
         , cellAtIndex
         , setValue
-        , nextCellValue
-        , updateCell
-        , updateCells
-        , averageAt
-        , randomHeatMap
+        , indices
         , renderAsHtml
         )
 
@@ -30,21 +26,27 @@ import Html exposing (Html)
 
 
 type CellGrid a
-    = HeatMap ( Int, Int ) (Array a)
+    = CellGrid ( Int, Int ) (Array a)
 
+
+
+type CellType
+    = Corner
+    | Edge
+    | Interior
 
 rows : CellGrid a -> Int
-rows (HeatMap ( rows_, _ ) _) =
+rows (CellGrid ( rows_, _ ) _) =
     rows_
 
 
 cols : CellGrid a -> Int
-cols (HeatMap ( r_, cols_ ) _) =
+cols (CellGrid ( r_, cols_ ) _) =
     cols_
 
 
 dimensions : CellGrid a -> ( Int, Int )
-dimensions (HeatMap idx _) =
+dimensions (CellGrid idx _) =
     idx
 
 
@@ -69,25 +71,21 @@ index ( nRows, nCols ) n =
 cellAtIndex : ( Int, Int ) -> CellGrid a -> Maybe a
 cellAtIndex ( i, j ) heatMap =
     let
-        (HeatMap ( nRows, _ ) array) =
+        (CellGrid ( nRows, _ ) array) =
             heatMap
     in
         Array.get (location nRows ( i, j )) array
 
 
 setValue : CellGrid a -> ( Int, Int ) -> a -> CellGrid a
-setValue (HeatMap ( nRows, nCols ) values) ( i, j ) value =
+setValue (CellGrid ( nRows, nCols ) values) ( i, j ) value =
     let
         k =
             location nRows ( i, j )
     in
-        (HeatMap ( nRows, nCols ) (Array.set k value values))
+        (CellGrid ( nRows, nCols ) (Array.set k value values))
 
 
-type CellType
-    = Corner
-    | Edge
-    | Interior
 
 
 classifyCell : CellGrid a -> ( Int, Int ) -> CellType
@@ -119,71 +117,15 @@ classifyCell heatMap ( i, j ) =
                     Edge
 
 
-averageAt : CellGrid Float -> ( Int, Int ) -> Float
-averageAt heatMap ( i, j ) =
-    let
-        east =
-            cellAtIndex ( i - 1, j ) heatMap |> Maybe.withDefault 0
-
-        west =
-            cellAtIndex ( i + 1, j ) heatMap |> Maybe.withDefault 0
-
-        north =
-            cellAtIndex ( i, j + 1 ) heatMap |> Maybe.withDefault 0
-
-        south =
-            cellAtIndex ( i, j - 1 ) heatMap |> Maybe.withDefault 0
-
-        denominator =
-            case classifyCell heatMap ( i, j ) of
-                Interior ->
-                    4
-
-                Edge ->
-                    3
-
-                Corner ->
-                    2
-    in
-        (east + west + north + south) / denominator
-
-
-randomHeatMap : ( Int, Int ) -> CellGrid Float
-randomHeatMap ( r, c ) =
-    HeatMap ( r, c ) (Array.fromList <| floatSequence (r * c) 0 ( 0, 1 ))
-
-
-nextCellValue : Float -> ( Int, Int ) -> CellGrid Float -> Float
-nextCellValue beta ( i, j ) heatMap =
-    let
-        currentCellValue =
-            cellAtIndex ( i, j ) heatMap |> Maybe.withDefault 0
-    in
-        case classifyCell heatMap ( i, j ) == Interior of
-            False ->
-                currentCellValue
-
-            True ->
-                (1 - beta) * currentCellValue + beta * (averageAt heatMap ( i, j ))
-
-
-updateCell : Float -> ( Int, Int ) -> CellGrid Float -> CellGrid Float
-updateCell beta ( i, j ) heatMap =
-    setValue heatMap ( i, j ) (nextCellValue beta ( i, j ) heatMap)
-
 
 indices : CellGrid a -> List ( Int, Int )
-indices (HeatMap ( nRows, nCols ) _) =
+indices (CellGrid ( nRows, nCols ) _) =
     let
         n =
             nRows * nCols
     in
         List.map (index ( nRows, nCols )) (List.range 0 (n - 1))
 
-
-updateCells : Float -> CellGrid Float -> CellGrid Float
-updateCells beta heatMap =
-    List.foldl (\( i, j ) acc -> setValue acc ( i, j ) (nextCellValue beta ( i, j ) heatMap)) heatMap (indices heatMap)
 
 
 
@@ -198,27 +140,6 @@ updateCells beta heatMap =
    [0.07049563320325747,0.8633668118636881,0.6762363032990798]
 
 -}
-
-
-floatSequence : Int -> Int -> ( Float, Float ) -> List Float
-floatSequence n k ( a, b ) =
-    floatSequence_ n (makeSeed k) ( a, b )
-        |> Tuple.first
-
-
-gen : Int -> ( Float, Float ) -> Random.Generator (List Float)
-gen n ( a, b ) =
-    Random.list n (Random.float a b)
-
-
-makeSeed : Int -> Random.Seed
-makeSeed k =
-    Random.initialSeed k
-
-
-floatSequence_ : Int -> Random.Seed -> ( Float, Float ) -> ( List Float, Random.Seed )
-floatSequence_ n seed ( a, b ) =
-    Random.step (gen n ( a, b )) seed
 
 
 
