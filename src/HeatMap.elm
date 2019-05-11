@@ -29,21 +29,21 @@ import Svg.Attributes as SA
 import Html exposing (Html)
 
 
-type HeatMap
-    = HeatMap ( Int, Int ) (Array Float)
+type HeatMap a
+    = HeatMap ( Int, Int ) (Array a)
 
 
-rows : HeatMap -> Int
+rows : HeatMap a -> Int
 rows (HeatMap ( rows_, _ ) _) =
     rows_
 
 
-cols : HeatMap -> Int
+cols : HeatMap a -> Int
 cols (HeatMap ( r_, cols_ ) _) =
     cols_
 
 
-dimensions : HeatMap -> ( Int, Int )
+dimensions : HeatMap a -> ( Int, Int )
 dimensions (HeatMap idx _) =
     idx
 
@@ -66,17 +66,16 @@ index ( nRows, nCols ) n =
     ( n // nCols, modBy nRows n )
 
 
-cellAtIndex : ( Int, Int ) -> HeatMap -> Float
+cellAtIndex : ( Int, Int ) -> HeatMap a -> Maybe a
 cellAtIndex ( i, j ) heatMap =
     let
         (HeatMap ( nRows, _ ) array) =
             heatMap
     in
         Array.get (location nRows ( i, j )) array
-            |> Maybe.withDefault 0
 
 
-setValue : HeatMap -> ( Int, Int ) -> Float -> HeatMap
+setValue : HeatMap a -> ( Int, Int ) -> a -> HeatMap a
 setValue (HeatMap ( nRows, nCols ) values) ( i, j ) value =
     let
         k =
@@ -91,7 +90,7 @@ type CellType
     | Interior
 
 
-classifyCell : HeatMap -> ( Int, Int ) -> CellType
+classifyCell : HeatMap a -> ( Int, Int ) -> CellType
 classifyCell heatMap ( i, j ) =
     let
         ( nRows, nCols ) =
@@ -120,20 +119,20 @@ classifyCell heatMap ( i, j ) =
                     Edge
 
 
-averageAt : HeatMap -> ( Int, Int ) -> Float
+averageAt : HeatMap Float -> ( Int, Int ) -> Float
 averageAt heatMap ( i, j ) =
     let
         east =
-            cellAtIndex ( i - 1, j ) heatMap
+            cellAtIndex ( i - 1, j ) heatMap |> Maybe.withDefault 0
 
         west =
-            cellAtIndex ( i + 1, j ) heatMap
+            cellAtIndex ( i + 1, j ) heatMap |> Maybe.withDefault 0
 
         north =
-            cellAtIndex ( i, j + 1 ) heatMap
+            cellAtIndex ( i, j + 1 ) heatMap |> Maybe.withDefault 0
 
         south =
-            cellAtIndex ( i, j - 1 ) heatMap
+            cellAtIndex ( i, j - 1 ) heatMap |> Maybe.withDefault 0
 
         denominator =
             case classifyCell heatMap ( i, j ) of
@@ -149,16 +148,16 @@ averageAt heatMap ( i, j ) =
         (east + west + north + south) / denominator
 
 
-randomHeatMap : ( Int, Int ) -> HeatMap
+randomHeatMap : ( Int, Int ) -> HeatMap Float
 randomHeatMap ( r, c ) =
     HeatMap ( r, c ) (Array.fromList <| floatSequence (r * c) 0 ( 0, 1 ))
 
 
-nextCellValue : Float -> ( Int, Int ) -> HeatMap -> Float
+nextCellValue : Float -> ( Int, Int ) -> HeatMap Float -> Float
 nextCellValue beta ( i, j ) heatMap =
     let
         currentCellValue =
-            cellAtIndex ( i, j ) heatMap
+            cellAtIndex ( i, j ) heatMap |> Maybe.withDefault 0
     in
         case classifyCell heatMap ( i, j ) == Interior of
             False ->
@@ -168,12 +167,12 @@ nextCellValue beta ( i, j ) heatMap =
                 (1 - beta) * currentCellValue + beta * (averageAt heatMap ( i, j ))
 
 
-updateCell : Float -> ( Int, Int ) -> HeatMap -> HeatMap
+updateCell : Float -> ( Int, Int ) -> HeatMap Float -> HeatMap Float
 updateCell beta ( i, j ) heatMap =
     setValue heatMap ( i, j ) (nextCellValue beta ( i, j ) heatMap)
 
 
-indices : HeatMap -> List ( Int, Int )
+indices : HeatMap a -> List ( Int, Int )
 indices (HeatMap ( nRows, nCols ) _) =
     let
         n =
@@ -182,7 +181,7 @@ indices (HeatMap ( nRows, nCols ) _) =
         List.map (index ( nRows, nCols )) (List.range 0 (n - 1))
 
 
-updateCells : Float -> HeatMap -> HeatMap
+updateCells : Float -> HeatMap Float -> HeatMap Float
 updateCells beta heatMap =
     List.foldl (\( i, j ) acc -> setValue acc ( i, j ) (nextCellValue beta ( i, j ) heatMap)) heatMap (indices heatMap)
 
@@ -228,7 +227,7 @@ floatSequence_ n seed ( a, b ) =
 --
 
 
-renderAsHtml : HeatMap -> Html msg
+renderAsHtml : HeatMap Float -> Html msg
 renderAsHtml heatMap =
     let
         ( nr, nc ) =
@@ -245,18 +244,18 @@ renderAsHtml heatMap =
             [ renderAsSvg cellSize heatMap ]
 
 
-renderAsSvg : Float -> HeatMap -> Svg msg
+renderAsSvg : Float -> HeatMap Float -> Svg msg
 renderAsSvg cellSize heatMap =
     indices heatMap
         |> List.map (renderCell cellSize heatMap)
         |> g []
 
 
-renderCell : Float -> HeatMap -> ( Int, Int ) -> Svg msg
+renderCell : Float -> HeatMap Float -> ( Int, Int ) -> Svg msg
 renderCell cellSize heatMap ( i, j ) =
     let
         red =
-            255.0 * (cellAtIndex ( i, j ) heatMap)
+            255.0 * (cellAtIndex ( i, j ) heatMap |> Maybe.withDefault 0)
 
         color =
             "rgb(" ++ String.fromFloat red ++ ", 0, 0)"
