@@ -13,7 +13,14 @@ module CellGrid
 
 {-| This library is just a test. I repeat: a test!
 
-@docs location, index
+## Main API
+
+@docs CellGrid, CellType, renderAsHtml
+
+
+## Work with cells
+
+@docs classifyCell, cellAtIndex, setValue, location, index, indices
 
 -}
 
@@ -25,11 +32,16 @@ import Svg.Attributes as SA
 import Html exposing (Html)
 
 
+{-| A value of type `CellGrid a` is a rectangular array
+of values of type a.
+
+-}
 type CellGrid a
     = CellGrid ( Int, Int ) (Array a)
 
 
-
+{-| A cell can be in the interior of the grid,
+on an edge, on in a cornder -}
 type CellType
     = Corner
     | Edge
@@ -68,15 +80,21 @@ index ( nRows, nCols ) n =
     ( n // nCols, modBy nRows n )
 
 
+{-| Return the Maybe value of the cell at (i,j) from grid
+
+-}
 cellAtIndex : ( Int, Int ) -> CellGrid a -> Maybe a
-cellAtIndex ( i, j ) heatMap =
+cellAtIndex ( i, j ) grid =
     let
         (CellGrid ( nRows, _ ) array) =
-            heatMap
+            grid
     in
         Array.get (location nRows ( i, j )) array
 
 
+{-| Set the value of the cell at location (i,j)
+
+-}
 setValue : CellGrid a -> ( Int, Int ) -> a -> CellGrid a
 setValue (CellGrid ( nRows, nCols ) values) ( i, j ) value =
     let
@@ -86,13 +104,14 @@ setValue (CellGrid ( nRows, nCols ) values) ( i, j ) value =
         (CellGrid ( nRows, nCols ) (Array.set k value values))
 
 
-
-
+{-| return the type of the cell at location (i,j).  Thus
+classifyCell grid (0,0) = Corner
+-}
 classifyCell : CellGrid a -> ( Int, Int ) -> CellType
-classifyCell heatMap ( i, j ) =
+classifyCell cellGrid ( i, j ) =
     let
         ( nRows, nCols ) =
-            dimensions heatMap
+            dimensions cellGrid
 
         mri =
             nRows - 1
@@ -116,8 +135,10 @@ classifyCell heatMap ( i, j ) =
                 else
                     Edge
 
+{-| Return a list of all indices (i,j) of a grid.
+Useful for mapping.
 
-
+-}
 indices : CellGrid a -> List ( Int, Int )
 indices (CellGrid ( nRows, nCols ) _) =
     let
@@ -129,30 +150,18 @@ indices (CellGrid ( nRows, nCols ) _) =
 
 
 
----
---- RNG
----
-{-
-
-   Example:
-
-   > RNG.floatSequence 3 23 (0,1)
-   [0.07049563320325747,0.8633668118636881,0.6762363032990798]
-
--}
-
-
-
 --
 -- RENDER GRID
 --
 
+{-| Render a cell grid as Html
 
+-}
 renderAsHtml : CellGrid Float -> Html msg
-renderAsHtml heatMap =
+renderAsHtml cellGrid =
     let
         ( nr, nc ) =
-            dimensions heatMap
+            dimensions cellGrid
 
         cellSize =
             400 / (toFloat nr)
@@ -162,21 +171,21 @@ renderAsHtml heatMap =
             , SA.width <| String.fromFloat 400
             , SA.viewBox <| "0 0 400 400"
             ]
-            [ renderAsSvg cellSize heatMap ]
+            [ renderAsSvg cellSize cellGrid ]
 
 
 renderAsSvg : Float -> CellGrid Float -> Svg msg
-renderAsSvg cellSize heatMap =
-    indices heatMap
-        |> List.map (renderCell cellSize heatMap)
+renderAsSvg cellSize cellGrid =
+    indices cellGrid
+        |> List.map (renderCell cellSize cellGrid)
         |> g []
 
 
 renderCell : Float -> CellGrid Float -> ( Int, Int ) -> Svg msg
-renderCell cellSize heatMap ( i, j ) =
+renderCell cellSize cellGrid ( i, j ) =
     let
         red =
-            255.0 * (cellAtIndex ( i, j ) heatMap |> Maybe.withDefault 0)
+            255.0 * (cellAtIndex ( i, j ) cellGrid |> Maybe.withDefault 0)
 
         color =
             "rgb(" ++ String.fromFloat red ++ ", 0, 0)"
