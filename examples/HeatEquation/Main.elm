@@ -12,7 +12,7 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
 import Element.Input as Input
-import CellGrid exposing (CellGrid)
+import CellGrid exposing (CellGrid, CellRenderer)
 import Time exposing (Posix)
 import TemperatureField
 
@@ -139,7 +139,7 @@ mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
             [ title "Diffusion of Heat"
-            , el [] (CellGrid.renderAsHtml model.heatMap |> Element.html)
+            , el [] (CellGrid.renderAsHtml cellrenderer model.heatMap |> Element.html)
             , row [ spacing 18 ]
                 [ resetButton
                 , runButton model
@@ -149,6 +149,16 @@ mainColumn model =
             , el [ Font.size 14, centerX ] (text "Run with 0 < beta < 1.0")
             ]
         ]
+
+
+cellrenderer : CellRenderer Float
+cellrenderer =
+    {
+         cellSize = 20
+       , cellColorizer = \red -> "rgb(" ++ String.fromFloat (255*red) ++ ", 0, 1)"
+       , defaultColor = "rgb(0, 0, 0)"
+    }
+
 
 
 counterDisplay : Model -> Element Msg

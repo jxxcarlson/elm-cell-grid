@@ -3,6 +3,7 @@ module CellGrid
         ( CellGrid(..)
         , classifyCell
         , CellType(..)
+        , CellRenderer
         , location
         , index
         , cellAtIndex
@@ -46,6 +47,14 @@ type CellType
     = Corner
     | Edge
     | Interior
+
+type alias ColorValue = String
+
+type alias CellRenderer a = {
+       cellSize : Float
+     , cellColorizer : a -> ColorValue
+     , defaultColor : ColorValue
+  }
 
 rows : CellGrid a -> Int
 rows (CellGrid ( rows_, _ ) _) =
@@ -157,40 +166,31 @@ indices (CellGrid ( nRows, nCols ) _) =
 {-| Render a cell grid as Html
 
 -}
-renderAsHtml : CellGrid Float -> Html msg
-renderAsHtml cellGrid =
-    let
-        ( nr, nc ) =
-            dimensions cellGrid
-
-        cellSize =
-            400 / (toFloat nr)
-    in
+renderAsHtml : CellRenderer a -> CellGrid a -> Html msg
+renderAsHtml cr cellGrid =
         svg
             [ SA.height <| String.fromFloat 400
             , SA.width <| String.fromFloat 400
             , SA.viewBox <| "0 0 400 400"
             ]
-            [ renderAsSvg cellSize cellGrid ]
+            [ renderAsSvg cr cellGrid ]
 
 
-renderAsSvg : Float -> CellGrid Float -> Svg msg
-renderAsSvg cellSize cellGrid =
+
+renderAsSvg : CellRenderer a -> CellGrid a -> Svg msg
+renderAsSvg cr cellGrid =
     indices cellGrid
-        |> List.map (renderCell cellSize cellGrid)
+        |> List.map (renderCell cr cellGrid)
         |> g []
 
 
-renderCell : Float -> CellGrid Float -> ( Int, Int ) -> Svg msg
-renderCell cellSize cellGrid ( i, j ) =
+renderCell : CellRenderer a -> CellGrid a -> ( Int, Int ) -> Svg msg
+renderCell cr cellGrid ( i, j ) =
     let
-        red =
-            255.0 * (cellAtIndex ( i, j ) cellGrid |> Maybe.withDefault 0)
-
-        color =
-            "rgb(" ++ String.fromFloat red ++ ", 0, 0)"
+       color = Maybe.map cr.cellColorizer (cellAtIndex ( i, j ) cellGrid) |> Maybe.withDefault cr.defaultColor
     in
-        gridRect cellSize color ( i, j )
+       gridRect cr.cellSize color ( i, j )
+
 
 
 gridRect : Float -> String -> ( Int, Int ) -> Svg msg
