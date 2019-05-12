@@ -4,25 +4,30 @@ module CellGrid
         , classifyCell
         , CellType(..)
         , CellRenderer
+        , cellGridFromList
         , mapWithIndex
         , location
-        , index
+        , matrixIndex
         , cellAtIndex
         , setValue
         , indices
+        , renderAsSvg
         , renderAsHtml
         )
 
 {-| This library is just a test. I repeat: a test!
 
-## Main API
+## Types
 
-@docs CellGrid, CellType, CellRenderer, renderAsHtml
+@docs CellGrid, CellType, CellRenderer
 
+## Constructing and rendering CellGrids
+
+@docs cellGridFromList, renderAsHtml, renderAsSvg
 
 ## Work with cells
 
-@docs mapWithIndex, classifyCell, cellAtIndex, setValue, location, index, indices
+@docs mapWithIndex, classifyCell, cellAtIndex, setValue, location, matrixIndex, indices
 
 -}
 
@@ -62,12 +67,40 @@ type alias CellRenderer a = {
      , defaultColor : ColorValue
   }
 
-{-| Transform a CellGrid a with a function ((Int, Int) -> a -> a)
+
+{-|  The empty cell grid. Useful in conjunction with `Maybe.withDefault`
+-}
+emptyCellGrid : CellGrid a
+emptyCellGrid =
+    CellGrid (0, 0) (Array.fromList [])
+
+{-| Construct a Maybe CellGrid from a list of  values of type `a`.
+If the length of the list is incompatible with the
+given number of rows and columns `Nothing` is returned.
+
+    > cellGridFromList 2 2 [1.0,2.0,3.0,4.0]
+      Just (CellGrid (2,2) (Array.fromList [1,2,3,4]))
+      : Maybe (CellGrid Float)
+
+    > cg = cellGridFromList 2 2 [1.0,2.0,3.0,4.0, 5.0]
+      Nothing : Maybe (CellGrid Float)
+
+-}
+cellGridFromList : Int -> Int -> List a -> Maybe (CellGrid a)
+cellGridFromList nRows nColumns data =
+    case List.length data == nRows*nColumns of
+        True -> Just <| CellGrid (nRows, nColumns) (Array.fromList data)
+        False -> Nothing
+
+
+{-| Transform a CellGrid a with a function ((Int, Int) -> a -> a).
+Used when the transformed value depends on its matrixIndex as well
+as its value
 -}
 mapWithIndex : ((Int,Int) -> a -> a) -> CellGrid a -> CellGrid a
 mapWithIndex cellTransformer (CellGrid (nRows, nCols) cells) =
     let
-        indexedCellTransformer = (\k a -> cellTransformer (index (nRows, nCols) k) a)
+        indexedCellTransformer = (\k a -> cellTransformer (matrixIndex (nRows, nCols) k) a)
     in
    (CellGrid (nRows, nCols) (Array.indexedMap indexedCellTransformer cells))
 
@@ -100,8 +133,8 @@ location nRows ( row, col ) =
 {-| Conversely, `index (nRows, nCols) k` is the
 2D array index `(i,j)` of the element al address `k`
 -}
-index : ( Int, Int ) -> Int -> ( Int, Int )
-index ( nRows, nCols ) n =
+matrixIndex : ( Int, Int ) -> Int -> ( Int, Int )
+matrixIndex ( nRows, nCols ) n =
     ( n // nCols, modBy nRows n )
 
 
@@ -170,7 +203,7 @@ indices (CellGrid ( nRows, nCols ) _) =
         n =
             nRows * nCols
     in
-        List.map (index ( nRows, nCols )) (List.range 0 (n - 1))
+        List.map (matrixIndex ( nRows, nCols )) (List.range 0 (n - 1))
 
 
 
@@ -192,7 +225,9 @@ renderAsHtml cr cellGrid =
             [ renderAsSvg cr cellGrid ]
 
 
+{-| Render a cell grid as SVG
 
+-}
 renderAsSvg : CellRenderer a -> CellGrid a -> Svg msg
 renderAsSvg cr cellGrid =
     indices cellGrid

@@ -14,8 +14,7 @@ import Element.Font as Font
 import Element.Input as Input
 import CellGrid exposing (CellGrid, CellRenderer)
 import Time exposing (Posix)
-import
-
+import TemperatureField
 
 tickInterval : Float
 tickInterval =
@@ -161,7 +160,7 @@ cellrenderer : CellRenderer Float
 cellrenderer =
     {
          cellSize = 15
-       , cellColorizer = \state -> "rgb(" ++ String.fromFloat (255*z) ++ ", 0, 1)"
+       , cellColorizer = \z -> "rgb(" ++ String.fromFloat (255*z) ++ ", 0, 1)"
        , defaultColor = "rgb(0, 0, 0)"
     }
 

@@ -158,19 +158,17 @@ mainColumn model =
         ]
 
 
-cellrenderer : CellRenderer State
 cellrenderer =
     {
          cellSize = 15
-       , cellColorizer = colorString
-       , defaultColor = "rgb(0, 0, 0)"
+       , cellColorizer = \state ->
+            case state of
+               Occupied -> "red"
+               Unoccupied -> "black"
+       , defaultColor = "black"
     }
 
-colorString : State -> String
-colorString state =
-    case state of
-        Occupied -> "red"
-        Unoccupied -> "black"
+
 
 
 counterDisplay : Model -> Element Msg

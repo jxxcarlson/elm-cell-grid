@@ -1,12 +1,31 @@
 # CellGrid
 
 The CellGrid package provides a type for representing
-a rectangular grid of cells of type `a`:
+a rectangular grid of cells.  
 
 ```
 type CellGrid a
     = CellGrid ( Int, Int ) (Array a)
 ```
+
+Two applications are given in 
+the `examples` folder: Conway's game of life, and a simulation
+of heat conduction.  In the first example, we use the type 
+`CellGrid State`, where 
+
+```
+type State = Occupied | Unoccupied
+```
+
+In the second, we use `CellGrid Float`.  The idea is the
+cell contents (the floating point number) represents 
+the temperature of the cell.
+
+One can create a CellGrid, transform it, and render it both SVG 
+and HTML.
+
+
+## Creating a CellGrid
 
 In the example below, we create a 2x2 `CellGrid Float`.
 
@@ -75,14 +94,7 @@ case, a shade of red.  See `examples/HeatEquation/Main.elm` for
 an illustration of how this is used.
 
 By using cellColorizers, one can render any kind of CellGrid.   
-For example, in Conway's Game of Life, one has a grid of cells
-that are either Occupied or Unoccupied, where
-
-```
-type State = Occupied | Unoccupied
-```
-
-In ths case, one would use a `CellGrid State` and a function
+For example, in Conway's Game of Life,  one  uses the function
 
 
 ```
@@ -97,8 +109,3 @@ cellrenderer =
        , defaultColor = "black"
     }
 ```
-
-## Examples
-
-In the examples folder, we show how a `CellGrid Float` can 
-be used to display an animation of heat conduction.
