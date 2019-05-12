@@ -70,10 +70,15 @@ init flags =
       , beta = 0.1
       , betaString = "0.1"
       , heatMap = TemperatureField.randomHeatMap ( 50, 50 )
+         |> TemperatureField.spot (20,20) 6 1.0
+         |> TemperatureField.spot (8,8) 8 0.0
       }
     , Cmd.none
     )
 
+--hotAndColdSpot : (Int, Int) -> CellGrid Float ->  CellGrid Float
+--hotAndColdSpot (rows, cols) heatMap =
+--    indices heatMap |> List.map (\(i, j) ->
 
 subscriptions model =
     Time.every tickInterval Tick
@@ -154,7 +159,7 @@ mainColumn model =
 cellrenderer : CellRenderer Float
 cellrenderer =
     {
-         cellSize = 20
+         cellSize = 15
        , cellColorizer = \red -> "rgb(" ++ String.fromFloat (255*red) ++ ", 0, 1)"
        , defaultColor = "rgb(0, 0, 0)"
     }

@@ -4,6 +4,7 @@ module CellGrid
         , classifyCell
         , CellType(..)
         , CellRenderer
+        , map
         , location
         , index
         , cellAtIndex
@@ -21,7 +22,7 @@ module CellGrid
 
 ## Work with cells
 
-@docs classifyCell, cellAtIndex, setValue, location, index, indices
+@docs map, classifyCell, cellAtIndex, setValue, location, index, indices
 
 -}
 
@@ -55,6 +56,16 @@ type alias CellRenderer a = {
      , cellColorizer : a -> ColorValue
      , defaultColor : ColorValue
   }
+
+{-| Transform a CellGrid a with a cellTransformer (a -> a)
+-}
+map : ((Int,Int) -> a -> a) -> CellGrid a -> CellGrid a
+map cellTransformer (CellGrid (nRows, nCols) cells) =
+    let
+        indexedCellTransformer = (\k a -> cellTransformer (index (nRows, nCols) k) a)
+    in
+   (CellGrid (nRows, nCols) (Array.indexedMap indexedCellTransformer cells))
+
 
 rows : CellGrid a -> Int
 rows (CellGrid ( rows_, _ ) _) =

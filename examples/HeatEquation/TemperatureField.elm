@@ -1,4 +1,4 @@
-module TemperatureField exposing (randomHeatMap, updateCells)
+module TemperatureField exposing (randomHeatMap, updateCells, spot)
 
 import Array exposing (Array)
 import Random
@@ -33,7 +33,6 @@ averageAt heatMap ( i, j ) =
 
                 Edge ->
                     3
-
                 Corner ->
                     2
     in
@@ -43,6 +42,22 @@ averageAt heatMap ( i, j ) =
 randomHeatMap : ( Int, Int ) -> CellGrid Float
 randomHeatMap ( r, c ) =
     CellGrid ( r, c ) (Array.fromList <| floatSequence (r * c) 0 ( 0, 1 ))
+
+
+spot : (Int, Int) -> Float -> Float -> CellGrid Float -> CellGrid Float
+spot (centerI, centerJ) radius temperature heatMap =
+    let
+        cellTransformer : (Int, Int) -> Float -> Float
+        cellTransformer (i, j) t =
+            let
+                di = toFloat <| i - centerI
+                dj = toFloat <| j - centerJ
+            in
+            case di*di + dj*dj <= radius*radius of
+                True -> temperature
+                False -> t
+     in
+     CellGrid.map cellTransformer heatMap
 
 
 floatSequence : Int -> Int -> ( Float, Float ) -> List Float
