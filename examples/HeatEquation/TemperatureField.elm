@@ -7,8 +7,7 @@ import CellGrid exposing (CellGrid(..), cellAtMatrixIndex, classifyCell, CellTyp
 
 updateCells : Float -> CellGrid Float -> CellGrid Float
 updateCells beta heatMap =
-    List.foldl (\( i, j ) acc -> setValue acc ( i, j ) (nextCellValue beta ( i, j ) heatMap)) heatMap (matrixIndices heatMap)
-
+    CellGrid.transform (nextCellValue beta) heatMap
 
 
 averageAt : CellGrid Float -> ( Int, Int ) -> Float

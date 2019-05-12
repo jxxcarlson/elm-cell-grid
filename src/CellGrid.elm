@@ -8,14 +8,15 @@ module CellGrid
         , emptyCellGrid
         , mapWithIndex
         , transform
-        , matrixIndices
         , cellAtMatrixIndex
         , setValue
         , renderAsSvg
         , renderAsHtml
         )
 
-{-| This library is just a test. I repeat: a test!
+{-| The CellGrid package provides a type for representing
+a rectangular grid of cells.  CellGrids can be created,
+transformed, and rendered as either SVG or HTML.
 
 ## Types
 
@@ -27,7 +28,7 @@ module CellGrid
 
 ## Work with cells
 
-@docs mapWithIndex, transform, classifyCell, cellAtMatrixIndex, setValue, index, matrixIndex,  matrixIndices
+@docs mapWithIndex, transform, classifyCell, cellAtMatrixIndex, setValue
 
 -}
 

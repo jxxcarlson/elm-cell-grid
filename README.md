@@ -22,8 +22,11 @@ cell contents (the floating point number) represents
 the temperature of the cell.
 
 One can create a CellGrid, transform it, and render it both SVG 
-and HTML.
+and HTML, as in the figure below (taken from the simulatio in 
+examples/HeatEquation)
 
+
+![((HTML rendition of CellGrids))](heat.jpg)
 
 ## Creating a CellGrid
 
