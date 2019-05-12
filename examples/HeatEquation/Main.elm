@@ -161,7 +161,7 @@ cellrenderer : CellRenderer Float
 cellrenderer =
     {
          cellSize = 15
-       , cellColorizer = \red -> "rgb(" ++ String.fromFloat (255*red) ++ ", 0, 1)"
+       , cellColorizer = \z -> "rgb(" ++ String.fromFloat (255*z) ++ ", 0, 1)"
        , defaultColor = "rgb(0, 0, 0)"
     }
 
