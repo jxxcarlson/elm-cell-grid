@@ -3,13 +3,13 @@ module Conway exposing (State(..), randomCellGrid, updateCells, spot)
 import Array exposing (Array)
 import Random
 import Maybe.Extra
-import CellGrid exposing (CellGrid(..), cellAtIndex, classifyCell, CellType(..), setValue, indices)
+import CellGrid exposing (CellGrid(..), cellAtMatrixIndex, classifyCell, CellType(..), setValue, matrixIndices)
 
 type State = Occupied | Unoccupied
 
 updateCells : CellGrid State -> CellGrid State
 updateCells cellGrid =
-    List.foldl (\( i, j ) acc -> setValue acc ( i, j ) (nextValue ( i, j ) cellGrid)) cellGrid (indices cellGrid)
+    List.foldl (\( i, j ) acc -> setValue acc ( i, j ) (nextValue ( i, j ) cellGrid)) cellGrid (matrixIndices cellGrid)
 
 
 
@@ -66,7 +66,7 @@ cellSequence_ n seed ( a, b ) =
 
 nextValue : ( Int, Int ) -> CellGrid State -> State
 nextValue ( i, j ) cellGrid =
-    case cellAtIndex (i, j) cellGrid of
+    case cellAtMatrixIndex (i, j) cellGrid of
         Nothing -> Unoccupied
         Just state ->
             let
@@ -96,7 +96,7 @@ neighborIndices cg (row, col) =
 neighbors : CellGrid a -> (Int, Int) -> List a
 neighbors cg (row, col)  =
     neighborIndices cg (row, col)
-        |> List.map (\( r, c ) -> cellAtIndex (r, c) cg)
+        |> List.map (\( r, c ) -> cellAtMatrixIndex (r, c) cg)
         |> Maybe.Extra.values
 
 occupied : CellGrid State -> (Int, Int) -> Int

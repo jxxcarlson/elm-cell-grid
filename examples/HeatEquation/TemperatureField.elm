@@ -2,12 +2,12 @@ module TemperatureField exposing (randomHeatMap, updateCells, spot)
 
 import Array exposing (Array)
 import Random
-import CellGrid exposing (CellGrid(..), cellAtIndex, classifyCell, CellType(..), setValue, indices)
+import CellGrid exposing (CellGrid(..), cellAtMatrixIndex, classifyCell, CellType(..), setValue, matrixIndices)
 
 
 updateCells : Float -> CellGrid Float -> CellGrid Float
 updateCells beta heatMap =
-    List.foldl (\( i, j ) acc -> setValue acc ( i, j ) (nextCellValue beta ( i, j ) heatMap)) heatMap (indices heatMap)
+    List.foldl (\( i, j ) acc -> setValue acc ( i, j ) (nextCellValue beta ( i, j ) heatMap)) heatMap (matrixIndices heatMap)
 
 
 
@@ -15,16 +15,16 @@ averageAt : CellGrid Float -> ( Int, Int ) -> Float
 averageAt heatMap ( i, j ) =
     let
         east =
-            cellAtIndex ( i - 1, j ) heatMap |> Maybe.withDefault 0
+            cellAtMatrixIndex ( i - 1, j ) heatMap |> Maybe.withDefault 0
 
         west =
-            cellAtIndex ( i + 1, j ) heatMap |> Maybe.withDefault 0
+            cellAtMatrixIndex ( i + 1, j ) heatMap |> Maybe.withDefault 0
 
         north =
-            cellAtIndex ( i, j + 1 ) heatMap |> Maybe.withDefault 0
+            cellAtMatrixIndex ( i, j + 1 ) heatMap |> Maybe.withDefault 0
 
         south =
-            cellAtIndex ( i, j - 1 ) heatMap |> Maybe.withDefault 0
+            cellAtMatrixIndex ( i, j - 1 ) heatMap |> Maybe.withDefault 0
 
         denominator =
             case classifyCell heatMap ( i, j ) of
@@ -86,7 +86,7 @@ nextCellValue : Float -> ( Int, Int ) -> CellGrid Float -> Float
 nextCellValue beta ( i, j ) heatMap =
     let
         currentCellValue =
-            cellAtIndex ( i, j ) heatMap |> Maybe.withDefault 0
+            cellAtMatrixIndex ( i, j ) heatMap |> Maybe.withDefault 0
     in
         case classifyCell heatMap ( i, j ) == Interior of
             False ->

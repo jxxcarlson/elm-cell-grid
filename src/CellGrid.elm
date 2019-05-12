@@ -5,12 +5,12 @@ module CellGrid
         , CellType(..)
         , CellRenderer
         , cellGridFromList
+        , emptyCellGrid
         , mapWithIndex
-        , location
-        , matrixIndex
-        , cellAtIndex
+        , transform
+        , matrixIndices
+        , cellAtMatrixIndex
         , setValue
-        , indices
         , renderAsSvg
         , renderAsHtml
         )
@@ -23,11 +23,11 @@ module CellGrid
 
 ## Constructing and rendering CellGrids
 
-@docs cellGridFromList, renderAsHtml, renderAsSvg
+@docs cellGridFromList, emptyCellGrid, renderAsHtml, renderAsSvg
 
 ## Work with cells
 
-@docs mapWithIndex, classifyCell, cellAtIndex, setValue, location, matrixIndex, indices
+@docs mapWithIndex, transform, classifyCell, cellAtMatrixIndex, setValue, index, matrixIndex,  matrixIndices
 
 -}
 
@@ -78,11 +78,11 @@ emptyCellGrid =
 If the length of the list is incompatible with the
 given number of rows and columns `Nothing` is returned.
 
-    > cellGridFromList 2 2 [1.0,2.0,3.0,4.0]
+    > cg = cellGridFromList 2 2 [1.0,2.0,3.0,4.0]
       Just (CellGrid (2,2) (Array.fromList [1,2,3,4]))
       : Maybe (CellGrid Float)
 
-    > cg = cellGridFromList 2 2 [1.0,2.0,3.0,4.0, 5.0]
+    > cellGridFromList 2 2 [1.0,2.0,3.0,4.0, 5.0]
       Nothing : Maybe (CellGrid Float)
 
 -}
@@ -92,6 +92,15 @@ cellGridFromList nRows nColumns data =
         True -> Just <| CellGrid (nRows, nColumns) (Array.fromList data)
         False -> Nothing
 
+
+{-| Transform a CellGrid using a function
+
+    (Int, Int) -> CellGrid a -> a)
+
+-}
+transform : ((Int, Int) -> CellGrid a -> a) -> CellGrid a -> CellGrid a
+transform newCellValue grid =
+    List.foldl (\( i, j ) acc -> setValue acc ( i, j ) (newCellValue ( i, j ) grid)) grid (matrixIndices grid)
 
 {-| Transform a CellGrid a with a function ((Int, Int) -> a -> a).
 Used when the transformed value depends on its matrixIndex as well
@@ -121,17 +130,17 @@ dimensions (CellGrid idx _) =
 
 
 {-| Consider a 1D array of elements which represents
-a 2D array with n rows. Then `location  n (i,j)`
-is the index in the 1D array of the correspondng
+a 2D array with n rows. Then `index  n (i,j)`
+is the index in the 1D array of the corresponding
 element in the 2D array at location (i,j)`
 -}
-location : Int -> ( Int, Int ) -> Int
-location nRows ( row, col ) =
+index : Int -> ( Int, Int ) -> Int
+index nRows ( row, col ) =
     nRows * row + col
 
 
-{-| Conversely, `index (nRows, nCols) k` is the
-2D array index `(i,j)` of the element al address `k`
+{-| Conversely, `matrixIndex (nRows, nCols) k` is the
+2D array index `(i,j)` of the element al index `k`
 -}
 matrixIndex : ( Int, Int ) -> Int -> ( Int, Int )
 matrixIndex ( nRows, nCols ) n =
@@ -140,14 +149,17 @@ matrixIndex ( nRows, nCols ) n =
 
 {-| Return the Maybe value of the cell at (i,j) from grid
 
+    > cellAtMatrixIndex (1,1) cg
+    Just 4 : Maybe Float
+
 -}
-cellAtIndex : ( Int, Int ) -> CellGrid a -> Maybe a
-cellAtIndex ( i, j ) grid =
+cellAtMatrixIndex : ( Int, Int ) -> CellGrid a -> Maybe a
+cellAtMatrixIndex ( i, j ) grid =
     let
         (CellGrid ( nRows, _ ) array) =
             grid
     in
-        Array.get (location nRows ( i, j )) array
+        Array.get (index nRows ( i, j )) array
 
 
 {-| Set the value of the cell at location (i,j)
@@ -157,7 +169,7 @@ setValue : CellGrid a -> ( Int, Int ) -> a -> CellGrid a
 setValue (CellGrid ( nRows, nCols ) values) ( i, j ) value =
     let
         k =
-            location nRows ( i, j )
+            index nRows ( i, j )
     in
         (CellGrid ( nRows, nCols ) (Array.set k value values))
 
@@ -193,12 +205,12 @@ classifyCell cellGrid ( i, j ) =
                 else
                     Edge
 
-{-| Return a list of all indices (i,j) of a grid.
+{-| Return a list of all matrix     indices (i,j) of a grid.
 Useful for mapping.
 
 -}
-indices : CellGrid a -> List ( Int, Int )
-indices (CellGrid ( nRows, nCols ) _) =
+matrixIndices : CellGrid a -> List ( Int, Int )
+matrixIndices (CellGrid ( nRows, nCols ) _) =
     let
         n =
             nRows * nCols
@@ -230,7 +242,7 @@ renderAsHtml cr cellGrid =
 -}
 renderAsSvg : CellRenderer a -> CellGrid a -> Svg msg
 renderAsSvg cr cellGrid =
-    indices cellGrid
+    matrixIndices cellGrid
         |> List.map (renderCell cr cellGrid)
         |> g []
 
@@ -238,7 +250,7 @@ renderAsSvg cr cellGrid =
 renderCell : CellRenderer a -> CellGrid a -> ( Int, Int ) -> Svg msg
 renderCell cr cellGrid ( i, j ) =
     let
-       color = Maybe.map cr.cellColorizer (cellAtIndex ( i, j ) cellGrid) |> Maybe.withDefault cr.defaultColor
+       color = Maybe.map cr.cellColorizer (cellAtMatrixIndex ( i, j ) cellGrid) |> Maybe.withDefault cr.defaultColor
     in
        gridRect cr.cellSize color ( i, j )
 
