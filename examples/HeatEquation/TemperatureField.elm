@@ -57,7 +57,7 @@ spot (centerI, centerJ) radius temperature heatMap =
                 True -> temperature
                 False -> t
      in
-     CellGrid.map cellTransformer heatMap
+     CellGrid.mapWithIndex cellTransformer heatMap
 
 
 floatSequence : Int -> Int -> ( Float, Float ) -> List Float

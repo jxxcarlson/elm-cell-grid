@@ -4,7 +4,7 @@ module CellGrid
         , classifyCell
         , CellType(..)
         , CellRenderer
-        , map
+        , mapWithIndex
         , location
         , index
         , cellAtIndex
@@ -17,12 +17,12 @@ module CellGrid
 
 ## Main API
 
-@docs CellGrid, CellType, renderAsHtml
+@docs CellGrid, CellType, CellRenderer, renderAsHtml
 
 
 ## Work with cells
 
-@docs map, classifyCell, cellAtIndex, setValue, location, index, indices
+@docs mapWithIndex, classifyCell, cellAtIndex, setValue, location, index, indices
 
 -}
 
@@ -51,16 +51,21 @@ type CellType
 
 type alias ColorValue = String
 
+{-| CellRenderer is a record that provides the information --
+cellSize, defaultColor, and the function cellColorizer --
+that are needed to render a cell to SVG.
+
+-}
 type alias CellRenderer a = {
        cellSize : Float
      , cellColorizer : a -> ColorValue
      , defaultColor : ColorValue
   }
 
-{-| Transform a CellGrid a with a cellTransformer (a -> a)
+{-| Transform a CellGrid a with a function ((Int, Int) -> a -> a)
 -}
-map : ((Int,Int) -> a -> a) -> CellGrid a -> CellGrid a
-map cellTransformer (CellGrid (nRows, nCols) cells) =
+mapWithIndex : ((Int,Int) -> a -> a) -> CellGrid a -> CellGrid a
+mapWithIndex cellTransformer (CellGrid (nRows, nCols) cells) =
     let
         indexedCellTransformer = (\k a -> cellTransformer (index (nRows, nCols) k) a)
     in

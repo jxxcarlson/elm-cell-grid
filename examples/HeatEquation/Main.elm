@@ -69,16 +69,17 @@ init flags =
       , appState = Ready
       , beta = 0.1
       , betaString = "0.1"
-      , heatMap = TemperatureField.randomHeatMap ( 50, 50 )
-         |> TemperatureField.spot (20,20) 6 1.0
-         |> TemperatureField.spot (8,8) 8 0.0
+      , heatMap = initialTemeperatureField
       }
     , Cmd.none
     )
 
---hotAndColdSpot : (Int, Int) -> CellGrid Float ->  CellGrid Float
---hotAndColdSpot (rows, cols) heatMap =
---    indices heatMap |> List.map (\(i, j) ->
+initialTemeperatureField =
+    TemperatureField.randomHeatMap ( 50, 50 )
+             |> TemperatureField.spot (20,20) 6 0.8
+             |> TemperatureField.spot (8,8) 8 0.0
+             |> TemperatureField.spot (8,8) 3 1.0
+
 
 subscriptions model =
     Time.every tickInterval Tick
@@ -125,7 +126,7 @@ update msg model =
                 ( { model | appState = nextAppState }, Cmd.none )
 
         Reset ->
-            ( { model | counter = 0, appState = Ready, heatMap = TemperatureField.randomHeatMap ( 50, 50 ) }, Cmd.none )
+            ( { model | counter = 0, appState = Ready, heatMap = initialTemeperatureField }, Cmd.none )
 
 
 
@@ -163,7 +164,6 @@ cellrenderer =
        , cellColorizer = \red -> "rgb(" ++ String.fromFloat (255*red) ++ ", 0, 1)"
        , defaultColor = "rgb(0, 0, 0)"
     }
-
 
 
 counterDisplay : Model -> Element Msg

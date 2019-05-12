@@ -1,8 +1,4 @@
-## New Library
+## CellGrid
 
-This library is just a placelholder for the real thing.
-It has one export, the string `message`, which is used by 
-examples/Main.elm.
-
-It is recommended to use `elm-doc-preview` before publishing
-a package to make sure that the documentation is in order.
+The CellGrid library provides a type for representing
+a rectangular grid of cells of type `a`.  

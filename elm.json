@@ -1,7 +1,7 @@
 {
     "type": "package",
-    "name": "jxxcarlson/newpackage",
-    "summary": "New newpackage for ...",
+    "name": "jxxcarlson/elm-cell-grid",
+    "summary": "Render a rectangular grid of cells to HTML.",
     "license": "BSD-3-Clause",
     "version": "1.0.0",
     "exposed-modules": [
