@@ -35,11 +35,13 @@ transformed, and rendered as either SVG or HTML.
 -}
 
 import Array exposing (Array)
-import Random
-import List.Extra
-import Svg exposing (Svg, svg, rect, g)
-import Svg.Attributes as SA
+import TypedSvg.Core exposing(Svg)
+import TypedSvg.Types exposing(Fill(..))
+import TypedSvg exposing (svg, rect,  g)
+import TypedSvg.Attributes exposing(viewBox, stroke,fill)
+import TypedSvg.Attributes.InPx exposing (height, width, x, y,  strokeWidth)
 import Html exposing (Html)
+import Color exposing (Color)
 
 
 {-| A value of type `CellGrid a` is a rectangular array
@@ -66,10 +68,11 @@ that are needed to render a cell to SVG.
 -}
 type alias CellRenderer a = {
        cellSize : Float
-     , cellColorizer : a -> ColorValue
-     , defaultColor : ColorValue
      , gridLineWidth : Float
-     , gridLineColor: String
+     , cellColorizer : a -> Color
+     , defaultColor : Color
+     , gridLineColor: Color
+
   }
 
 
@@ -251,12 +254,12 @@ matrixIndices (CellGrid ( nRows, nCols ) _) =
 {-| Render a cell grid as Html
 
 -}
-renderAsHtml : CellRenderer a -> CellGrid a -> Html msg
-renderAsHtml cr cellGrid =
+renderAsHtml : Float -> Float -> CellRenderer a -> CellGrid a -> Html msg
+renderAsHtml width_ height_ cr cellGrid =
         svg
-            [ SA.height <| String.fromFloat 400
-            , SA.width <| String.fromFloat 400
-            , SA.viewBox <| "0 0 400 400"
+            [ height  height_
+            , width  width_
+            , viewBox 0 0 width_ height_
             ]
             [ renderAsSvg cr cellGrid ]
 
@@ -278,33 +281,14 @@ renderCell cr cellGrid ( i, j ) =
        color = Maybe.map cr.cellColorizer (cellAtMatrixIndex ( i, j ) cellGrid) |> Maybe.withDefault cr.defaultColor
     in
       rect
-              [ SA.width <| String.fromFloat size
-              , SA.height <| String.fromFloat size
-              , SA.x <| String.fromFloat <| size * (toFloat i)
-              , SA.y <| String.fromFloat <| size * (toFloat j)
-              , SA.fill color
+              [ width size
+              , height size
+              , x  <| size * (toFloat i)
+              , y  <| size * (toFloat j)
+              , fill (Fill color)
 
-              , SA.strokeWidth (String.fromFloat cr.gridLineWidth)
-              , SA.stroke cr.gridLineColor
+              , strokeWidth  cr.gridLineWidth
+              , stroke cr.gridLineColor
               ]
               []
-
---
---
---gridRect : CellRenderer a -> ( Int, Int ) -> Svg msg
---gridRect cr ( row, col ) =
---    let
---        size = cr.cellSize
---    in
---    rect
---        [ SA.width <| String.fromFloat size
---        , SA.height <| String.fromFloat size
---        , SA.x <| String.fromFloat <| size * (toFloat col)
---        , SA.y <| String.fromFloat <| size * (toFloat row)
---        , SA.fill color
---
---        , SA.strokeWidth (String.fromInt cr.gridLineWidth)
---        , SA.stroke cr.gridLineColor
---        ]
---        []
 

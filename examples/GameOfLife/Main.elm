@@ -16,6 +16,7 @@ import CellGrid exposing (CellGrid, CellRenderer)
 import Time exposing (Posix)
 import Conway exposing(State(..))
 import Random
+import Color
 import Html.Events.Extra.Mouse as Mouse
 
 
@@ -206,7 +207,7 @@ mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
             [ title "Conway's Game of Life"
-            , el [] (CellGrid.renderAsHtml cellrenderer model.heatMap |> Element.html)
+            , el [] (CellGrid.renderAsHtml 400 400 cellrenderer model.heatMap |> Element.html)
             , row [ spacing 18 ]
                 [ resetButton
                 , runButton model
@@ -248,11 +249,11 @@ cellrenderer =
          cellSize = 5
        , cellColorizer = \state ->
             case state of
-               Occupied -> "blue"
-               Unoccupied -> "black"
-       , defaultColor = "black"
+               Occupied -> Color.rgb 0 0 1
+               Unoccupied -> Color.rgb 0 0 0
+       , defaultColor = Color.rgb 0 0 0
        , gridLineWidth = 0.5
-       , gridLineColor = "blue"
+       , gridLineColor = Color.rgb 0 0 1
     }
 
 

@@ -15,6 +15,7 @@ import Element.Input as Input
 import CellGrid exposing (CellGrid, CellRenderer)
 import Time exposing (Posix)
 import TemperatureField
+import Color exposing(Color)
 
 tickInterval : Float
 tickInterval =
@@ -144,7 +145,7 @@ mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
             [ title "Diffusion of Heat"
-            , el [] (CellGrid.renderAsHtml cellrenderer model.heatMap |> Element.html)
+            , el [] (CellGrid.renderAsHtml 400 400 cellrenderer model.heatMap |> Element.html)
             , row [ spacing 18 ]
                 [ resetButton
                 , runButton model
@@ -160,9 +161,9 @@ cellrenderer : CellRenderer Float
 cellrenderer =
     {
          cellSize = 8
-       , cellColorizer = \z -> "rgb(" ++ String.fromFloat (255*z) ++ ", 0, 1)"
-       , defaultColor = "rgb(0, 0, 0)"
-       , gridLineColor = "rgb(180,0,0)"
+       , cellColorizer = \z -> Color.rgb z 0 0
+       , defaultColor = Color.rgb 0 0 0
+       , gridLineColor = Color.rgb 180 0 0
        , gridLineWidth = 0.5
     }
 
