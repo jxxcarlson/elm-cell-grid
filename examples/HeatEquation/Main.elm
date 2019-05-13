@@ -159,9 +159,11 @@ mainColumn model =
 cellrenderer : CellRenderer Float
 cellrenderer =
     {
-         cellSize = 15
+         cellSize = 8
        , cellColorizer = \z -> "rgb(" ++ String.fromFloat (255*z) ++ ", 0, 1)"
        , defaultColor = "rgb(0, 0, 0)"
+       , gridLineColor = "rgb(180,0,0)"
+       , gridLineWidth = 0.5
     }
 
 
