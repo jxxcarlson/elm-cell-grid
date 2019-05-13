@@ -6,12 +6,14 @@ module CellGrid
         , CellRenderer
         , cellGridFromList
         , emptyCellGrid
+        , map
         , mapWithIndex
+        , foldl
         , transform
         , cellAtMatrixIndex
-        , setValue
         , renderAsSvg
         , renderAsHtml
+        , setValue
         )
 
 {-| The CellGrid package provides a type for representing
@@ -28,7 +30,7 @@ transformed, and rendered as either SVG or HTML.
 
 ## Work with cells
 
-@docs mapWithIndex, transform, classifyCell, cellAtMatrixIndex, setValue
+@docs map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue
 
 -}
 
@@ -66,6 +68,8 @@ type alias CellRenderer a = {
        cellSize : Float
      , cellColorizer : a -> ColorValue
      , defaultColor : ColorValue
+     , gridLineWidth : Float
+     , gridLineColor: String
   }
 
 
@@ -94,14 +98,23 @@ cellGridFromList nRows nColumns data =
         False -> Nothing
 
 
-{-| Transform a CellGrid using a function
+{-| Map a function over a CellGrid:
 
-    (Int, Int) -> CellGrid a -> a)
+    > map (\x -> 2*x) cg
+    CellGrid (2,2) (Array.fromList [2,4,6,8])
 
 -}
-transform : ((Int, Int) -> CellGrid a -> a) -> CellGrid a -> CellGrid a
-transform newCellValue grid =
-    List.foldl (\( i, j ) acc -> setValue acc ( i, j ) (newCellValue ( i, j ) grid)) grid (matrixIndices grid)
+map : (a -> a) -> CellGrid a -> CellGrid a
+map f (CellGrid (nRows, nCols) cells) =
+    (CellGrid (nRows, nCols) (Array.map f cells))
+
+
+{-| Fold a reducer (a -> b -> b) over a CellGrid a)
+-}
+foldl : (a -> b -> b) -> b -> CellGrid a -> b
+foldl reducer initialValue (CellGrid (_, _) cells) =
+    Array.foldl reducer initialValue cells
+
 
 {-| Transform a CellGrid a with a function ((Int, Int) -> a -> a).
 Used when the transformed value depends on its matrixIndex as well
@@ -113,6 +126,16 @@ mapWithIndex cellTransformer (CellGrid (nRows, nCols) cells) =
         indexedCellTransformer = (\k a -> cellTransformer (matrixIndex (nRows, nCols) k) a)
     in
    (CellGrid (nRows, nCols) (Array.indexedMap indexedCellTransformer cells))
+
+{-| Transform a CellGrid using a function
+
+    (Int, Int) -> CellGrid a -> a)
+
+-}
+transform : ((Int, Int) -> CellGrid a -> a) -> CellGrid a -> CellGrid a
+transform newCellValue grid =
+    List.foldl (\( i, j ) acc -> setValue acc ( i, j ) (newCellValue ( i, j ) grid)) grid (matrixIndices grid)
+
 
 
 rows : CellGrid a -> Int
@@ -251,22 +274,37 @@ renderAsSvg cr cellGrid =
 renderCell : CellRenderer a -> CellGrid a -> ( Int, Int ) -> Svg msg
 renderCell cr cellGrid ( i, j ) =
     let
+       size = cr.cellSize
        color = Maybe.map cr.cellColorizer (cellAtMatrixIndex ( i, j ) cellGrid) |> Maybe.withDefault cr.defaultColor
     in
-       gridRect cr.cellSize color ( i, j )
+      rect
+              [ SA.width <| String.fromFloat size
+              , SA.height <| String.fromFloat size
+              , SA.x <| String.fromFloat <| size * (toFloat i)
+              , SA.y <| String.fromFloat <| size * (toFloat j)
+              , SA.fill color
 
+              , SA.strokeWidth (String.fromFloat cr.gridLineWidth)
+              , SA.stroke cr.gridLineColor
+              ]
+              []
 
+--
+--
+--gridRect : CellRenderer a -> ( Int, Int ) -> Svg msg
+--gridRect cr ( row, col ) =
+--    let
+--        size = cr.cellSize
+--    in
+--    rect
+--        [ SA.width <| String.fromFloat size
+--        , SA.height <| String.fromFloat size
+--        , SA.x <| String.fromFloat <| size * (toFloat col)
+--        , SA.y <| String.fromFloat <| size * (toFloat row)
+--        , SA.fill color
+--
+--        , SA.strokeWidth (String.fromInt cr.gridLineWidth)
+--        , SA.stroke cr.gridLineColor
+--        ]
+--        []
 
-gridRect : Float -> String -> ( Int, Int ) -> Svg msg
-gridRect size color ( row, col ) =
-    rect
-        [ SA.width <| String.fromFloat size
-        , SA.height <| String.fromFloat size
-        , SA.x <| String.fromFloat <| size * (toFloat col)
-        , SA.y <| String.fromFloat <| size * (toFloat row)
-        , SA.fill color
-
-        --, SA.strokeWidth "1"
-        -- , SA.stroke "rgb(25, 55, 125)"
-        ]
-        []
