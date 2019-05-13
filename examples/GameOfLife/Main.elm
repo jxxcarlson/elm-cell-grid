@@ -16,6 +16,7 @@ import CellGrid exposing (CellGrid, CellRenderer)
 import Time exposing (Posix)
 import Conway exposing(State(..))
 import Random
+import Html.Events.Extra.Mouse as Mouse
 
 
 tickInterval : Float
@@ -66,6 +67,7 @@ type Msg
     | AdvanceAppState
     | Reset
     | NewPair (Int, Int)
+    -- | MouseClick (Float, Float)
 
 
 type alias Flags =
@@ -217,6 +219,12 @@ mainColumn model =
                 ]
             ]
         ]
+
+
+--onMouseClick : Attribute Msg
+--onMouseClick =
+--    Mouse.onClick (.clientPos >> MouseClick)
+
 
 currentDensity : Model -> Float
 currentDensity model =
