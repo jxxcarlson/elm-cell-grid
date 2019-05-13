@@ -90,7 +90,7 @@ neighborFilter (CellGrid (nRows, nCols) _) ( a, b ) =
 neighborIndices : CellGrid a -> (Int, Int) -> List ( Int, Int )
 neighborIndices cg (row, col) =
     [ ( row - 1, col ), ( row + 1, col ), ( row, col - 1 ), ( row, col + 1 ),
-       (row - 1, col - 1), (row - 1, col + 1), (row + 1, col - 1), (row + 1, col - 1)]
+       (row - 1, col - 1), (row - 1, col + 1), (row + 1, col - 1), (row + 1, col + 1)]
         |> List.filter (neighborFilter cg)
 
 

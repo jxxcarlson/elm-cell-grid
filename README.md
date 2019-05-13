@@ -8,9 +8,9 @@ type CellGrid a
     = CellGrid ( Int, Int ) (Array a)
 ```
 
-Two applications are given in 
-the `examples` folder: Conway's game of life, and a simulation
-of heat conduction.  In the first example, we use the type 
+There are two on-line demo applications: [Conway's game of life](https://jxxcarlson.github.io/app/gameoflife2.html), and [a simulation
+of heat conduction](https://jxxcarlson.github.io/app/heat-model.html).  See the `examples` folder on [GitHub](https://github.com/jxxcarlson/elm-cell-grid)
+for the code. In the first example, we use the type 
 `CellGrid State`, where 
 
 ```
