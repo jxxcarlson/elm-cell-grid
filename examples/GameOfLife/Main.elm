@@ -25,6 +25,11 @@ tickInterval =
     333
 
 
+initialDensity = 0.3
+initialSeed = 3771
+gridWidth = 80
+lowDensityThreshold = 0.00
+
 main =
     Browser.element
         { init = init
@@ -75,11 +80,6 @@ type alias Flags =
     {}
 
 
-initialDensity = 0.3
-initialSeed = 3771
-gridWidth = 80
-lowDensityThreshold = 0.00
-
 init : Flags -> ( Model, Cmd Msg )
 init flags =
     ( { input = "Test"
@@ -101,9 +101,6 @@ init flags =
 initialCellGrid : Int -> Float -> CellGrid State
 initialCellGrid seed density =
     Conway.randomCellGrid seed density ( gridWidth, gridWidth )
---             |> Conway.spot (20,20) 8 Occupied
---             |> Conway.spot (8,8) 8 Unoccupied
---             |> Conway.spot (8,8) 3 Unoccupied
 
 
 subscriptions model =

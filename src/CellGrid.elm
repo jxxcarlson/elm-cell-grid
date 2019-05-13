@@ -59,7 +59,6 @@ type CellType
     | Edge
     | Interior
 
-type alias ColorValue = String
 
 {-| CellRenderer is a record that provides the information --
 cellSize, defaultColor, and the function cellColorizer --
