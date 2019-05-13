@@ -28,7 +28,7 @@ tickInterval =
 initialDensity = 0.3
 initialSeed = 3771
 gridWidth = 100
-gridDisplayWidth = 400.0
+gridDisplayWidth = 500.0
 
 
 
