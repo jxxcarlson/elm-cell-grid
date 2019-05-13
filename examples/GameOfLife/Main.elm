@@ -15,6 +15,7 @@ import Element.Input as Input
 import CellGrid exposing (CellGrid, CellRenderer)
 import Time exposing (Posix)
 import Conway exposing(State(..))
+import Random
 
 
 tickInterval : Float
@@ -35,9 +36,14 @@ type alias Model =
     { input : String
     , output : String
     , counter : Int
+    , trial : Int
     , appState : AppState
-    , beta : Float
-    , betaString : String
+    , density : Float
+    , densityString : String
+    , currentDensity : Float
+    , seed : Int
+    , seedString : String
+    , randomPair : (Int, Int)
     , heatMap : CellGrid State
     }
 
@@ -47,36 +53,51 @@ type AppState
     | Running
     | Paused
 
+--
+-- MSG
+--
 
 type Msg
     = NoOp
     | InputBeta String
+    | InputSeed String
     | Step
     | Tick Posix
     | AdvanceAppState
     | Reset
+    | NewPair (Int, Int)
 
 
 type alias Flags =
     {}
 
 
+initialDensity = 0.3
+initialSeed = 3771
+gridWidth = 80
+lowDensityThreshold = 0.00
+
 init : Flags -> ( Model, Cmd Msg )
 init flags =
     ( { input = "Test"
       , output = "Test"
       , counter = 0
+      , trial = 0
       , appState = Ready
-      , beta = 0.1
-      , betaString = "0.1"
-      , heatMap = initialCellGrid
+      , density = initialDensity
+      , densityString = String.fromFloat initialDensity
+      , currentDensity = initialDensity
+      , seed = initialSeed
+      , seedString  = String.fromInt initialSeed
+      , randomPair = (0,0)
+      , heatMap = initialCellGrid initialSeed initialDensity
       }
     , Cmd.none
     )
 
-initialCellGrid : CellGrid State
-initialCellGrid =
-    Conway.randomCellGrid ( 80, 80 )
+initialCellGrid : Int -> Float -> CellGrid State
+initialCellGrid seed density =
+    Conway.randomCellGrid seed density ( gridWidth, gridWidth )
 --             |> Conway.spot (20,20) 8 Occupied
 --             |> Conway.spot (8,8) 8 Unoccupied
 --             |> Conway.spot (8,8) 3 Unoccupied
@@ -95,10 +116,18 @@ update msg model =
         InputBeta str ->
             case String.toFloat str of
                 Nothing ->
-                    ( { model | betaString = str }, Cmd.none )
+                    ( { model | densityString = str }, Cmd.none )
 
-                Just beta_ ->
-                    ( { model | betaString = str, beta = beta_ }, Cmd.none )
+                Just density_ ->
+                    ( { model | densityString = str, density = density_ }, Cmd.none )
+
+        InputSeed str ->
+            case String.toInt str of
+                 Nothing ->
+                     ( { model | seedString = str }, Cmd.none )
+
+                 Just seed_ ->
+                            ( { model | seedString = str, seed = seed_ }, Cmd.none )
 
         Step ->
             ( { model | counter = model.counter + 1, heatMap = Conway.updateCells model.heatMap }, Cmd.none )
@@ -106,7 +135,12 @@ update msg model =
         Tick t ->
             case model.appState == Running of
                 True ->
-                    ( { model | counter = model.counter + 1, heatMap = Conway.updateCells  model.heatMap }, Cmd.none )
+                    ( { model |
+                         counter = model.counter + 1
+                        , heatMap = Conway.updateCells  model.heatMap |> generateNewLife model
+                        , currentDensity = currentDensity model
+                      },
+                        Random.generate NewPair generatePair)
 
                 False ->
                     ( model, Cmd.none )
@@ -127,9 +161,33 @@ update msg model =
                 ( { model | appState = nextAppState }, Cmd.none )
 
         Reset ->
-            ( { model | counter = 0, appState = Ready, heatMap = initialCellGrid }, Cmd.none )
+            ( { model | counter = 0, trial = model.trial + 1,
+                appState = Ready, heatMap = initialCellGrid (model.seed + model.trial + 1) model.density}, Cmd.none )
+
+        NewPair (i, j) ->
+           ({ model | randomPair = (i,j)}, Cmd.none)
 
 
+generateNewLife : Model -> CellGrid State -> CellGrid State
+generateNewLife model cg =
+    case model.currentDensity < lowDensityThreshold of
+        False -> cg
+        True ->
+            let
+                (i,j) = model.randomPair
+            in
+                Conway.occupy (i,j) cg
+                 |> Conway.occupy (i+1,j)
+                 |> Conway.occupy (i+1,j+1)
+                 |> Conway.occupy (i+1,j+2)
+                 |> Conway.occupy (i+1,j+3)
+                 |> Conway.occupy (i+2,j+3)
+                 |> Conway.occupy (i+1,j+3)
+                 |> Conway.occupy (i,j+3)
+
+
+generatePair =
+    Random.pair (Random.int 0 (gridWidth - 1)) (Random.int 0 (gridWidth - 1))
 
 --
 -- VIEW
@@ -145,30 +203,49 @@ mainColumn : Model -> Element Msg
 mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
-            [ title "Diffusion of Heat"
+            [ title "Conway's Game of Life"
             , el [] (CellGrid.renderAsHtml cellrenderer model.heatMap |> Element.html)
             , row [ spacing 18 ]
                 [ resetButton
                 , runButton model
                 , row [ spacing 8 ] [ stepButton, counterDisplay model ]
-                , inputBeta model
+                , inputDensity model
                 ]
-            , el [ Font.size 14, centerX ] (text "Run with 0 < beta < 1.0")
+            , row [Font.size 14, centerX, spacing 12] [
+                 el [ ] (text <| "Current density = " ++ String.fromFloat model.currentDensity)
+                 --, el [ ] (text "Run with 0 < density < 1.0")
+                ]
             ]
         ]
+
+currentDensity : Model -> Float
+currentDensity model =
+    let
+        population = Conway.occupied model.heatMap |> toFloat
+        capacity = gridWidth*gridWidth |> toFloat
+    in
+        population/capacity |> roundTo 4
+
+
+roundTo : Int -> Float -> Float
+roundTo places x =
+    let
+        k = 10^places |> toFloat
+    in
+     (round (k*x) |> toFloat)/k
 
 
 cellrenderer =
     {
-         cellSize = 15
+         cellSize = 5
        , cellColorizer = \state ->
             case state of
-               Occupied -> "red"
+               Occupied -> "blue"
                Unoccupied -> "black"
        , defaultColor = "black"
+       , gridLineWidth = 0.5
+       , gridLineColor = "blue"
     }
-
-
 
 
 counterDisplay : Model -> Element Msg
@@ -191,15 +268,23 @@ buttonFontSize =
     16
 
 
-inputBeta : Model -> Element Msg
-inputBeta model =
+inputDensity : Model -> Element Msg
+inputDensity model =
     Input.text [ width (px 60), Font.size buttonFontSize ]
         { onChange = InputBeta
-        , text = model.betaString
+        , text = model.densityString
         , placeholder = Nothing
-        , label = Input.labelLeft [] <| el [ Font.size buttonFontSize, moveDown 12 ] (text "beta ")
+        , label = Input.labelLeft [] <| el [ Font.size buttonFontSize, moveDown 12 ] (text "Initial density ")
         }
 
+inputSeed : Model -> Element Msg
+inputSeed model =
+    Input.text [ width (px 60), Font.size buttonFontSize ]
+        { onChange = InputSeed
+        , text = model.seedString
+        , placeholder = Nothing
+        , label = Input.labelLeft [] <| el [ Font.size buttonFontSize, moveDown 12 ] (text "seed ")
+        }
 
 stepButton : Element Msg
 stepButton =
