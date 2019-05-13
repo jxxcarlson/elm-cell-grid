@@ -55,7 +55,7 @@ type alias Model =
     , seed : Int
     , seedString : String
     , randomPair : (Int, Int)
-    , heatMap : CellGrid State
+    , cellMap : CellGrid State
     }
 
 
@@ -97,7 +97,7 @@ init flags =
       , seed = initialSeed
       , seedString  = String.fromInt initialSeed
       , randomPair = (0,0)
-      , heatMap = initialCellGrid initialSeed initialDensity
+      , cellMap = initialCellGrid initialSeed initialDensity
       }
     , Cmd.none
     )
@@ -134,14 +134,14 @@ update msg model =
                             ( { model | seedString = str, seed = seed_ }, Cmd.none )
 
         Step ->
-            ( { model | counter = model.counter + 1, heatMap = Conway.updateCells model.heatMap }, Cmd.none )
+            ( { model | counter = model.counter + 1, cellMap = Conway.updateCells model.cellMap }, Cmd.none )
 
         Tick t ->
             case model.appState == Running of
                 True ->
                     ( { model |
                          counter = model.counter + 1
-                        , heatMap = Conway.updateCells  model.heatMap |> generateNewLife model
+                        , cellMap = Conway.updateCells  model.cellMap |> generateNewLife model
                         , currentDensity = currentDensity model
                       },
                         Random.generate NewPair generatePair)
@@ -166,7 +166,7 @@ update msg model =
 
         Reset ->
             ( { model | counter = 0, trial = model.trial + 1,
-                appState = Ready, heatMap = initialCellGrid (model.seed + model.trial + 1) model.density}, Cmd.none )
+                appState = Ready, cellMap = initialCellGrid (model.seed + model.trial + 1) model.density}, Cmd.none )
 
         NewPair (i, j) ->
            ({ model | randomPair = (i,j)}, Cmd.none)
@@ -208,7 +208,7 @@ mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
             [ title "Conway's Game of Life"
-            , el [centerX] (CellGrid.renderAsHtml 400 400 cellrenderer model.heatMap |> Element.html)
+            , el [centerX] (CellGrid.renderAsHtml 400 400 cellrenderer model.cellMap |> Element.html)
             , row [ spacing 18 ]
                 [ resetButton
                 , runButton model
@@ -233,7 +233,7 @@ mainColumn model =
 currentDensity : Model -> Float
 currentDensity model =
     let
-        population = Conway.occupied model.heatMap |> toFloat
+        population = Conway.occupied model.cellMap |> toFloat
         capacity = gridWidth*gridWidth |> toFloat
     in
         population/capacity |> roundTo 4

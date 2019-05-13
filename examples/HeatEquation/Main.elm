@@ -12,7 +12,7 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
 import Element.Input as Input
-import CellGrid exposing (CellGrid, CellRenderer)
+import CellGrid exposing (CellGrid(..), CellRenderer)
 import Time exposing (Posix)
 import TemperatureField
 import Color exposing(Color)
@@ -73,12 +73,13 @@ init flags =
       , appState = Ready
       , beta = 0.1
       , betaString = "0.1"
-      , heatMap = initialTemeperatureField
+      , heatMap = initialTemperatureField
       }
     , Cmd.none
     )
 
-initialTemeperatureField =
+initialTemperatureField : CellGrid Float
+initialTemperatureField =
     let
       w = toFloat gridWidth
       c1 = floor <| 0.6*w
@@ -137,7 +138,7 @@ update msg model =
                 ( { model | appState = nextAppState }, Cmd.none )
 
         Reset ->
-            ( { model | counter = 0, appState = Ready, heatMap = initialTemeperatureField }, Cmd.none )
+            ( { model | counter = 0, appState = Ready, heatMap = initialTemperatureField }, Cmd.none )
 
 
 
