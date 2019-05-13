@@ -28,7 +28,7 @@ tickInterval =
 initialDensity = 0.3
 initialSeed = 3771
 gridWidth = 100
-gridDisplayWidth = 500.0
+gridDisplayWidth = 450.0
 
 
 
@@ -208,7 +208,7 @@ mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
             [ title "Conway's Game of Life"
-            , el [centerX] (CellGrid.renderAsHtml 400 400 cellrenderer model.cellMap |> Element.html)
+            , el [centerX] (CellGrid.renderAsHtml gridDisplayWidth gridDisplayWidth cellrenderer model.cellMap |> Element.html)
             , row [ spacing 18 ]
                 [ resetButton
                 , runButton model
