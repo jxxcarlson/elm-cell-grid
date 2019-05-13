@@ -25,6 +25,19 @@ One can create a CellGrid, transform it, and render it both SVG
 and HTML, as in the figure below (taken from the simulation in 
 examples/HeatEquation)
 
+Note the type
+
+```
+type Msg = MouseClick (Int, Int) (Float, Float)
+```
+
+It is referenced by the function which renders a cell
+so that when the user clicks on a cell, a message 
+is sent containing the matrix index *(i,j)* of the cell
+in question as well as its apparamter local floating
+point coordinates *(x,y)*.  In `./examples/GameOfLife.elm`,
+see the files `Main.elm` to see how this message is used.
+
 
 ![((HTML rendition of CellGrids))](heat.jpg)
 

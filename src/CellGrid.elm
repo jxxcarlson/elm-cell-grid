@@ -3,6 +3,7 @@ module CellGrid
         ( CellGrid(..)
         , classifyCell
         , CellType(..)
+        , Msg(..)
         , CellRenderer
         , cellGridFromList
         , emptyCellGrid
@@ -22,7 +23,7 @@ transformed, and rendered as either SVG or HTML.
 
 ## Types
 
-@docs CellGrid, CellType, CellRenderer
+@docs CellGrid, CellType, CellRenderer, Msg
 
 ## Constructing and rendering CellGrids
 
@@ -42,6 +43,7 @@ import TypedSvg.Attributes exposing(viewBox, stroke,fill)
 import TypedSvg.Attributes.InPx exposing (height, width, x, y,  strokeWidth)
 import Html exposing (Html)
 import Color exposing (Color)
+import Html.Events.Extra.Mouse as Mouse
 
 
 {-| A value of type `CellGrid a` is a rectangular array
@@ -76,6 +78,12 @@ type alias CellRenderer a = {
 
   }
 
+{-| The MouseClick message sends the matrix index (i,j)
+of the cell on which the user has clicked as well
+as the local (x,y) coordinates of the cell.
+
+-}
+type Msg = MouseClick (Int, Int) (Float, Float)
 
 {-|  The empty cell grid. Useful in conjunction with `Maybe.withDefault`
 -}
@@ -259,7 +267,7 @@ matrixIndices (CellGrid ( nRows, nCols ) _) =
 are the width and height of the rendered grid in pixels.
 
 -}
-renderAsHtml : Float -> Float -> CellRenderer a -> CellGrid a -> Html msg
+renderAsHtml : Float -> Float -> CellRenderer a -> CellGrid a -> Html Msg
 renderAsHtml width_ height_ cr cellGrid =
         svg
             [ height  height_
@@ -272,14 +280,14 @@ renderAsHtml width_ height_ cr cellGrid =
 {-| Render a cell grid as SVG
 
 -}
-renderAsSvg : CellRenderer a -> CellGrid a -> Svg msg
+renderAsSvg : CellRenderer a -> CellGrid a -> Svg Msg
 renderAsSvg cr cellGrid =
     matrixIndices cellGrid
         |> List.map (renderCell cr cellGrid)
         |> g []
 
 
-renderCell : CellRenderer a -> CellGrid a -> ( Int, Int ) -> Svg msg
+renderCell : CellRenderer a -> CellGrid a -> ( Int, Int ) -> Svg Msg
 renderCell cr cellGrid ( i, j ) =
     let
        size = cr.cellSize
@@ -291,7 +299,7 @@ renderCell cr cellGrid ( i, j ) =
               , x  <| size * (toFloat i)
               , y  <| size * (toFloat j)
               , fill (Fill color)
-
+              , Mouse.onDown (.clientPos >> MouseClick (i,j))
               , strokeWidth  cr.gridLineWidth
               , stroke cr.gridLineColor
               ]

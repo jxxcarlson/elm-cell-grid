@@ -20,6 +20,7 @@ import Color
 import Html.Events.Extra.Mouse as Mouse
 
 
+
 tickInterval : Float
 tickInterval =
     333
@@ -56,6 +57,7 @@ type alias Model =
     , seedString : String
     , randomPair : (Int, Int)
     , cellMap : CellGrid State
+    , message : String
     }
 
 
@@ -77,7 +79,7 @@ type Msg
     | AdvanceAppState
     | Reset
     | NewPair (Int, Int)
-    -- | MouseClick (Float, Float)
+    | CellGrid CellGrid.Msg
 
 
 type alias Flags =
@@ -98,6 +100,7 @@ init flags =
       , seedString  = String.fromInt initialSeed
       , randomPair = (0,0)
       , cellMap = initialCellGrid initialSeed initialDensity
+      , message = "Starting ..."
       }
     , Cmd.none
     )
@@ -171,6 +174,17 @@ update msg model =
         NewPair (i, j) ->
            ({ model | randomPair = (i,j)}, Cmd.none)
 
+        CellGrid msg_ ->
+            case msg_ of
+                CellGrid.MouseClick (i, j) (x, y) ->
+                  let
+                    part1 = "i = " ++ String.fromInt i ++ ", j = " ++ String.fromInt j ++ "; "
+                    part2 = "x = " ++ String.fromFloat x ++ ", y =" ++ String.fromFloat y ++ "."
+
+                  in
+                    ({ model | message = part1 ++ part2}, Cmd.none)
+
+
 
 generateNewLife : Model -> CellGrid State -> CellGrid State
 generateNewLife model cg =
@@ -208,7 +222,8 @@ mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
             [ title "Conway's Game of Life"
-            , el [centerX] (CellGrid.renderAsHtml gridDisplayWidth gridDisplayWidth cellrenderer model.cellMap |> Element.html)
+            , el [centerX] (CellGrid.renderAsHtml gridDisplayWidth gridDisplayWidth cellrenderer model.cellMap
+               |> Element.html |> Element.map CellGrid)
             , row [ spacing 18 ]
                 [ resetButton
                 , runButton model
@@ -220,6 +235,7 @@ mainColumn model =
                  , Element.newTabLink [Font.size 14, centerX, Font.color <| Element.rgb 0.4 0.4 1]
                      { url = "https://github.com/jxxcarlson/elm-cell-grid/tree/master/examples/GameOfLife",
                                                label = el [] (text "Code on GitHub")}
+                 , el [ Font.color light] (text <| model.message)
                 ]
             ]
         ]
