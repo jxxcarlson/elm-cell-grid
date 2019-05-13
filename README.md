@@ -54,7 +54,7 @@ Elements of a `CellGrid` can be accessed as one expects
 in a 2D array:
 
 ```
-> cellAtIndex (1,1) cg
+> cellAtMatrixIndex (1,1) cg
 Just 4 : Maybe Float
 ```
 
@@ -63,16 +63,22 @@ Just 4 : Maybe Float
 Render a `CellGrid` using the function
 
 ```
-renderAsHtml : CellRenderer a -> CellGrid a -> Html msg
+renderAsHtml : Int -> Int ->  CellRenderer a 
+               -> CellGrid a -> Html msg
 ```
 
-where one has 
+where the first two parameters are the width and
+height of the rendered Cellgrid in pixels,
+and where the third defines how a cell is rndered:
 
 ```
 type alias CellRenderer a = {
        cellSize : Float
-     , cellColorizer : a -> ColorValue
-     , defaultColor : ColorValue
+     , gridLineWidth : Float
+     , cellColorizer : a -> Color
+     , defaultColor : Color
+     , gridLineColor: Color
+
   }
 ```
 
@@ -80,14 +86,13 @@ A `ColorValue` is a type alias for `String`.  Here is a typical
 `CellRenderer`: 
 
 ```
-cellrenderer : CellRenderer Float
-cellrenderer =
-    {
-         cellSize = 15
-       , cellColorizer = \z -> 
-           "rgb(" ++ String.fromFloat (255*z) ++ ", 0, 1)"
-       , defaultColor = "rgb(0, 0, 0)"
-    }
+type alias CellRenderer a = {
+       cellSize : Float
+     , gridLineWidth : Float
+     , cellColorizer : a -> Color
+     , defaultColor : Color
+     , gridLineColor: Color
+  }
 ```
 
 For a `CellGrid Float`, the contents of a cell is real number. 
@@ -101,14 +106,13 @@ For example, in Conway's Game of Life,  one  uses the function
 
 
 ```
-cellrenderer : CellRenderer State
+cellrenderer : CellRenderer Float
 cellrenderer =
     {
-         cellSize = 15
-       , cellColorizer = \state -> 
-            case state of
-               Occupied -> "red" 
-               Unoccupied -> "black"
-       , defaultColor = "black"
+         cellSize = 10
+       , cellColorizer = \z -> Color.rgb z 0 0
+       , defaultColor = Color.rgb 0 0 0
+       , gridLineColor = Color.rgb 180 0 0
+       , gridLineWidth = 0.5
     }
 ```

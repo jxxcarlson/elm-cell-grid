@@ -61,8 +61,10 @@ type CellType
 
 
 {-| CellRenderer is a record that provides the information --
-cellSize, defaultColor, and the function cellColorizer --
-that are needed to render a cell to SVG.
+size and color --
+that is needed to render a cell to SVG.  `Color` is as
+defined in the package `avh4/elm-color`, e.g. `Color.rgb 1 0 0`,
+which is bright red.
 
 -}
 type alias CellRenderer a = {
@@ -82,12 +84,15 @@ emptyCellGrid =
     CellGrid (0, 0) (Array.fromList [])
 
 {-| Construct a Maybe CellGrid from a list of  values of type `a`.
-If the length of the list is incompatible with the
-given number of rows and columns `Nothing` is returned.
+Here is a  2x2 cell grid of type `Float`:
 
     > cg = cellGridFromList 2 2 [1.0,2.0,3.0,4.0]
       Just (CellGrid (2,2) (Array.fromList [1,2,3,4]))
       : Maybe (CellGrid Float)
+
+If the length of the list is incompatible with the
+given number of rows and columns `Nothing` is returned.
+
 
     > cellGridFromList 2 2 [1.0,2.0,3.0,4.0, 5.0]
       Nothing : Maybe (CellGrid Float)
@@ -250,7 +255,8 @@ matrixIndices (CellGrid ( nRows, nCols ) _) =
 -- RENDER GRID
 --
 
-{-| Render a cell grid as Html
+{-| Render a cell grid as Html.  The first two parameters
+are the width and height of the rendered grid in pixels.
 
 -}
 renderAsHtml : Float -> Float -> CellRenderer a -> CellGrid a -> Html msg

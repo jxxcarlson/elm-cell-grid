@@ -22,6 +22,10 @@ tickInterval =
     333
 
 
+initialSeed = 3771
+gridWidth = 70
+gridDisplayWidth = 500.0
+
 main =
     Browser.element
         { init = init
@@ -75,10 +79,17 @@ init flags =
     )
 
 initialTemeperatureField =
-    TemperatureField.randomHeatMap ( 50, 50 )
-             |> TemperatureField.spot (20,20) 6 0.8
-             |> TemperatureField.spot (8,8) 8 0.0
-             |> TemperatureField.spot (8,8) 3 1.0
+    let
+      w = toFloat gridWidth
+      c1 = floor <| 0.6*w
+      c2 =  floor <| 0.2*w
+      r1 = 0.2*w
+      r2 = 0.1*w
+    in
+    TemperatureField.randomHeatMap ( gridWidth, gridWidth )
+             |> TemperatureField.spot (c1,c1) r1 1.0
+             |> TemperatureField.spot (c2,c2) r1 0.0
+             |> TemperatureField.spot (c2,c2) r2 1.0
 
 
 subscriptions model =
@@ -137,7 +148,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    Element.layout [] (mainColumn model)
+    Element.layout [Background.color <| Element.rgb 0 0 0] (mainColumn model)
 
 
 mainColumn : Model -> Element Msg
@@ -152,15 +163,16 @@ mainColumn model =
                 , row [ spacing 8 ] [ stepButton, counterDisplay model ]
                 , inputBeta model
                 ]
-            , el [ Font.size 14, centerX ] (text "Run with 0 < beta < 1.0")
+            , el [ Font.size 14, centerX, Font.color <| gray 0.5 ] (text "Run with 0 < beta < 1.0")
             ]
         ]
 
+gray g = Element.rgb g g g
 
 cellrenderer : CellRenderer Float
 cellrenderer =
     {
-         cellSize = 8
+         cellSize = gridDisplayWidth/(toFloat gridWidth)
        , cellColorizer = \z -> Color.rgb z 0 0
        , defaultColor = Color.rgb 0 0 0
        , gridLineColor = Color.rgb 180 0 0
@@ -170,12 +182,12 @@ cellrenderer =
 
 counterDisplay : Model -> Element Msg
 counterDisplay model =
-    el [ Font.size 18, width (px 30) ] (text <| String.fromInt model.counter)
+    el [ Font.size 18, width (px 30), Font.color <| Element.rgb 1 1 1 ] (text <| String.fromInt model.counter)
 
 
 title : String -> Element msg
 title str =
-    row [ centerX, Font.bold ] [ text str ]
+    row [ centerX, Font.bold, Font.color <| gray 0.7 ] [ text str ]
 
 
 outputDisplay : Model -> Element msg
@@ -190,11 +202,11 @@ buttonFontSize =
 
 inputBeta : Model -> Element Msg
 inputBeta model =
-    Input.text [ width (px 60), Font.size buttonFontSize ]
+    Input.text [ width (px 60), height (px 30), Font.size buttonFontSize, Background.color (gray 0.8) ]
         { onChange = InputBeta
         , text = model.betaString
         , placeholder = Nothing
-        , label = Input.labelLeft [] <| el [ Font.size buttonFontSize, moveDown 12 ] (text "beta ")
+        , label = Input.labelLeft [] <| el [ Font.color <| Element.rgb 0.8 0.8 0.8, Font.size buttonFontSize, moveDown 10, moveLeft 5 ] (text "beta ")
         }
 
 
@@ -259,14 +271,14 @@ appStateAsString appState =
 mainColumnStyle =
     [ centerX
     , centerY
-    , Background.color (rgb255 240 240 240)
+    , Background.color (rgb255 0 0 0)
     , paddingXY 20 20
     ]
 
 
 buttonStyle =
     [ Background.color (rgb255 40 40 40)
-    , Font.color (rgb255 255 255 255)
+    , Font.color (gray 0.7)
     , paddingXY 15 8
     , Font.size buttonFontSize
     ]

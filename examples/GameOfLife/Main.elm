@@ -27,7 +27,11 @@ tickInterval =
 
 initialDensity = 0.3
 initialSeed = 3771
-gridWidth = 80
+gridWidth = 100
+gridDisplayWidth = 500.0
+
+
+
 lowDensityThreshold = 0.00
 
 main =
@@ -243,7 +247,7 @@ roundTo places x =
 
 cellrenderer =
     {
-         cellSize = 5
+         cellSize = gridDisplayWidth/(toFloat gridWidth)
        , cellColorizer = \state ->
             case state of
                Occupied -> Color.rgb 0 0 1
