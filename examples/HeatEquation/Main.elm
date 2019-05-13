@@ -164,6 +164,8 @@ mainColumn model =
                 , inputBeta model
                 ]
             , el [ Font.size 14, centerX, Font.color <| gray 0.5 ] (text "Run with 0 < beta < 1.0")
+            , Element.newTabLink [Font.size 14, centerX, Font.color <| Element.rgb 0.4 0.4 1] { url = "https://github.com/jxxcarlson/elm-cell-grid/tree/3.0.0/examples/HeatEquation",
+                              label = el [] (text "Code on GitHub")}
             ]
         ]
 

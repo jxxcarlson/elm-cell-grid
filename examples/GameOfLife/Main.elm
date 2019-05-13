@@ -28,7 +28,7 @@ tickInterval =
 initialDensity = 0.3
 initialSeed = 3771
 gridWidth = 100
-gridDisplayWidth = 500.0
+gridDisplayWidth = 400.0
 
 
 
@@ -200,7 +200,7 @@ generatePair =
 
 view : Model -> Html Msg
 view model =
-    Element.layout [] (mainColumn model)
+    Element.layout [Background.color dark] (mainColumn model)
 
 
 mainColumn : Model -> Element Msg
@@ -208,16 +208,18 @@ mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
             [ title "Conway's Game of Life"
-            , el [] (CellGrid.renderAsHtml 400 400 cellrenderer model.heatMap |> Element.html)
+            , el [centerX] (CellGrid.renderAsHtml 400 400 cellrenderer model.heatMap |> Element.html)
             , row [ spacing 18 ]
                 [ resetButton
                 , runButton model
                 , row [ spacing 8 ] [ stepButton, counterDisplay model ]
                 , inputDensity model
                 ]
-            , row [Font.size 14, centerX, spacing 12] [
-                 el [ ] (text <| "Current density = " ++ String.fromFloat model.currentDensity)
-                 --, el [ ] (text "Run with 0 < density < 1.0")
+            , row [Font.size 14, centerX, spacing 24] [
+                 el [ Font.color light] (text <| "Current density = " ++ String.fromFloat model.currentDensity)
+                 , Element.newTabLink [Font.size 14, centerX, Font.color <| Element.rgb 0.4 0.4 1]
+                     { url = "https://github.com/jxxcarlson/elm-cell-grid/tree/master/examples/GameOfLife",
+                                               label = el [] (text "Code on GitHub")}
                 ]
             ]
         ]
@@ -260,12 +262,12 @@ cellrenderer =
 
 counterDisplay : Model -> Element Msg
 counterDisplay model =
-    el [ Font.size 18, width (px 30) ] (text <| String.fromInt model.counter)
+    el [ Font.size 18, width (px 30), Font.color light ] (text <| String.fromInt model.counter)
 
 
 title : String -> Element msg
 title str =
-    row [ centerX, Font.bold ] [ text str ]
+    row [ centerX, Font.bold, Font.color light ] [ text str ]
 
 
 outputDisplay : Model -> Element msg
@@ -280,11 +282,11 @@ buttonFontSize =
 
 inputDensity : Model -> Element Msg
 inputDensity model =
-    Input.text [ width (px 60), Font.size buttonFontSize ]
+    Input.text [ width (px 60), height (px 30), Font.size buttonFontSize, Background.color light ]
         { onChange = InputBeta
         , text = model.densityString
         , placeholder = Nothing
-        , label = Input.labelLeft [] <| el [ Font.size buttonFontSize, moveDown 12 ] (text "Initial density ")
+        , label = Input.labelLeft [] <| el [ Font.size buttonFontSize, moveDown 8.5, Font.color light ] (text "Initial density ")
         }
 
 inputSeed : Model -> Element Msg
@@ -322,7 +324,7 @@ activeBackgroundColor model =
             Background.color (Element.rgb 0.65 0 0)
 
         _ ->
-            Background.color (Element.rgb 0 0 0)
+            Background.color (gray 0.2)
 
 
 resetButton : Element Msg
@@ -353,18 +355,22 @@ appStateAsString appState =
 -- STYLE
 --
 
+dark = gray 0.1
+light = gray 0.8
+
+gray g = rgb g g g
 
 mainColumnStyle =
     [ centerX
     , centerY
-    , Background.color (rgb255 240 240 240)
+    , Background.color dark
     , paddingXY 20 20
     ]
 
 
 buttonStyle =
-    [ Background.color (rgb255 40 40 40)
-    , Font.color (rgb255 255 255 255)
+    [ Background.color (gray 0.2)
+    , Font.color (gray 0.7)
     , paddingXY 15 8
     , Font.size buttonFontSize
     ]
