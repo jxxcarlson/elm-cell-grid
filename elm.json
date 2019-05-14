@@ -3,7 +3,7 @@
     "name": "jxxcarlson/elm-cell-grid",
     "summary": "Render a rectangular grid of cells to HTML.",
     "license": "BSD-3-Clause",
-    "version": "3.0.2",
+    "version": "4.0.0",
     "exposed-modules": [
         "CellGrid"
     ],
