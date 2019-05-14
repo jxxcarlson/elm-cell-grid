@@ -1,7 +1,8 @@
 # CellGrid
 
 The CellGrid package provides a type for representing
-a rectangular grid of cells.  
+a rectangular grid of cells.  The grid can respond
+to mouse clicks.
 
 ```
 type CellGrid a
@@ -34,7 +35,7 @@ type Msg = MouseClick (Int, Int) (Float, Float)
 It is referenced by the function which renders a cell
 so that when the user clicks on a cell, a message 
 is sent containing the matrix index *(i,j)* of the cell
-in question as well as its apparamter local floating
+in question as well as its local floating
 point coordinates *(x,y)*.  In `./examples/GameOfLife.elm`,
 see the files `Main.elm` to see how this message is used.
 
