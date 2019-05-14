@@ -178,8 +178,8 @@ update msg model =
             case msg_ of
                 CellGrid.MouseClick (i, j) (x, y) ->
                   let
-                    part1 = "i = " ++ String.fromInt i ++ ", j = " ++ String.fromInt j ++ "; "
-                    part2 = "x = " ++ String.fromFloat x ++ ", y =" ++ String.fromFloat y ++ "."
+                    part1 = "(i,j) = (" ++ String.fromInt i ++ ", " ++ String.fromInt j ++ "), "
+                    part2 = "(x,y) = (" ++ String.fromFloat x ++ ", " ++ String.fromFloat y ++ ")"
 
                   in
                     ({ model | message = part1 ++ part2}, Cmd.none)
