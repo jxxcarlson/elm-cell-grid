@@ -100,7 +100,7 @@ init flags =
       , seedString  = String.fromInt initialSeed
       , randomPair = (0,0)
       , cellMap = initialCellGrid initialSeed initialDensity
-      , message = "Starting ..."
+      , message = "Click to make cell."
       }
     , Cmd.none
     )
@@ -178,11 +178,10 @@ update msg model =
             case msg_ of
                 CellGrid.MouseClick (i, j) (x, y) ->
                   let
-                    part1 = "(i,j) = (" ++ String.fromInt i ++ ", " ++ String.fromInt j ++ "), "
-                    part2 = "(x,y) = (" ++ String.fromFloat x ++ ", " ++ String.fromFloat y ++ ")"
-
+                    message = "(i,j) = (" ++ String.fromInt i ++ ", " ++ String.fromInt j ++ ")"
                   in
-                    ({ model | message = part1 ++ part2}, Cmd.none)
+                    ({ model | message = message
+                         , cellMap = Conway.toggleState (i,j) model.cellMap }, Cmd.none)
 
 
 
@@ -195,13 +194,7 @@ generateNewLife model cg =
                 (i,j) = model.randomPair
             in
                 Conway.occupy (i,j) cg
-                 |> Conway.occupy (i+1,j)
-                 |> Conway.occupy (i+1,j+1)
-                 |> Conway.occupy (i+1,j+2)
-                 |> Conway.occupy (i+1,j+3)
-                 |> Conway.occupy (i+2,j+3)
-                 |> Conway.occupy (i+1,j+3)
-                 |> Conway.occupy (i,j+3)
+
 
 
 generatePair =
@@ -231,11 +224,11 @@ mainColumn model =
                 , inputDensity model
                 ]
             , row [Font.size 14, centerX, spacing 24] [
-                 el [ Font.color light] (text <| "Current density = " ++ String.fromFloat model.currentDensity)
+                 el [ width (px 150), Font.color light] (text <| "Current density = " ++ String.fromFloat model.currentDensity)
                  , Element.newTabLink [Font.size 14, centerX, Font.color <| Element.rgb 0.4 0.4 1]
                      { url = "https://github.com/jxxcarlson/elm-cell-grid/tree/master/examples/GameOfLife",
                                                label = el [] (text "Code on GitHub")}
-                 , el [ Font.color light] (text <| model.message)
+                 , el [ width (px 100), Font.color light] (text <| model.message)
                 ]
             ]
         ]
@@ -252,7 +245,7 @@ currentDensity model =
         population = Conway.occupied model.cellMap |> toFloat
         capacity = gridWidth*gridWidth |> toFloat
     in
-        population/capacity |> roundTo 4
+        population/capacity |> roundTo 2
 
 
 roundTo : Int -> Float -> Float

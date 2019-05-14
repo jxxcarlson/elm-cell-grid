@@ -1,4 +1,4 @@
-module Conway exposing (State(..), randomCellGrid, updateCells, spot, occupied, occupy)
+module Conway exposing (State(..), randomCellGrid, updateCells, spot, occupied, occupy, toggleState)
 
 import Array exposing (Array)
 import Random
@@ -20,6 +20,15 @@ randomCellGrid seed density ( r, c ) =
 occupy :  (Int, Int) -> CellGrid State -> CellGrid State
 occupy (i, j) cg  =
     CellGrid.setValue cg ( i, j ) Occupied
+
+toggleState :  (Int, Int) -> CellGrid State -> CellGrid State
+toggleState (i, j) cg  =
+    case CellGrid.cellAtMatrixIndex (i,j) cg of
+        Nothing -> cg
+        Just state ->
+            case state of
+                Unoccupied -> CellGrid.setValue cg ( i, j ) Occupied
+                Occupied -> CellGrid.setValue cg ( i, j ) Unoccupied
 
 spot : (Int, Int) -> Float -> State -> CellGrid State -> CellGrid State
 spot (centerI, centerJ) radius state cg =
