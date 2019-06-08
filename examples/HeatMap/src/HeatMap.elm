@@ -8,18 +8,13 @@ import Array
 import Browser
 import Browser.Events exposing (onAnimationFrameDelta)
 import CellGrid exposing (CellGrid(..), matrixIndex)
-import CellGrid.WebGL exposing (Colorizer, Vertex, meshWithColorizer, temperatureArray)
+import CellGrid.WebGL exposing (Colorizer, Vertex)
 import Html exposing (Html)
 import Html.Attributes exposing (height, style, width)
 import Json.Decode exposing (Value)
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import WebGL exposing (Mesh)
-
-
-gridSize : Int
-gridSize =
-    100
 
 
 main : Program Value Float Float
@@ -39,13 +34,13 @@ view t =
 
 testMesh : Int -> Float -> Mesh Vertex
 testMesh n ds =
-    meshWithColorizer (colorAtMatrixIndex ( n, n )) ( n, n ) ( ds, ds )
+    CellGrid.WebGL.meshWithColorizer (colorAtMatrixIndex ( n, n )) ( n, n ) ( ds, ds )
 
 
 testMesh2 : Int -> Float -> Mesh Vertex
 testMesh2 n ds =
     testGrid ( n, n )
-        |> meshFromCellGrid ( ds, ds ) redMap
+        |> CellGrid.WebGL.meshFromCellGrid ( ds, ds ) redMap
 
 
 redMap : Float -> Vec3
@@ -53,94 +48,9 @@ redMap t =
     vec3 (1.0 * t) 0 0
 
 
-makeCellGrid : ( Int, Int ) -> (( Int, Int ) -> Float) -> CellGrid Float
-makeCellGrid ( nRows, nCols ) temperatureMap =
-    let
-        n =
-            nRows * nCols
-    in
-    List.map (matrixIndex ( nRows, nCols )) (List.range 0 (n - 1))
-        |> List.map (\( i, j ) -> temperatureMap ( i, j ))
-        |> (\list -> CellGrid ( nRows, nCols ) (Array.fromList list))
-
-
 testGrid : ( Int, Int ) -> CellGrid Float
 testGrid ( nRows, nCols ) =
-    makeCellGrid ( nRows, nCols ) (temperatureAtIndex ( nRows, nCols ))
-
-
-meshFromCellGrid : ( Float, Float ) -> (Float -> Vec3) -> CellGrid Float -> Mesh Vertex
-meshFromCellGrid ( dw, dh ) temperatureMap cellGrid =
-    let
-        rect =
-            rectangleFromElement temperatureMap ( dw, dh )
-    in
-    temperatureArray cellGrid
-        |> List.map rect
-        |> List.concat
-        |> WebGL.triangles
-
-
-rectangleAtIndex : Colorizer -> ( Float, Float ) -> ( Int, Int ) -> List ( Vertex, Vertex, Vertex )
-rectangleAtIndex colorizer ( dw, dh ) ( i_, j_ ) =
-    let
-        i =
-            toFloat i_
-
-        j =
-            toFloat j_
-
-        x =
-            -1.0 + i * dw
-
-        y =
-            1.0 - j * dh
-
-        color_ =
-            colorizer ( i_, j_ )
-    in
-    [ ( Vertex (vec3 x y 0) color_
-      , Vertex (vec3 (x + dw) y 0) color_
-      , Vertex (vec3 x (y - dh) 0) color_
-      )
-    , ( Vertex (vec3 (x + dw) y 0) color_
-      , Vertex (vec3 (x + dw) (y - dh) 0) color_
-      , Vertex (vec3 x (y - dh) 0) color_
-      )
-    ]
-
-
-rectangleFromElement :
-    (Float -> Vec3)
-    -> ( Float, Float )
-    -> ( ( Int, Int ), Float )
-    -> List ( Vertex, Vertex, Vertex )
-rectangleFromElement temperatureMap ( dw, dh ) ( ( i_, j_ ), t ) =
-    let
-        i =
-            toFloat i_
-
-        j =
-            toFloat j_
-
-        x =
-            -1.0 + i * dw
-
-        y =
-            1.0 - j * dh
-
-        color_ =
-            temperatureMap t
-    in
-    [ ( Vertex (vec3 x y 0) color_
-      , Vertex (vec3 (x + dw) y 0) color_
-      , Vertex (vec3 x (y - dh) 0) color_
-      )
-    , ( Vertex (vec3 (x + dw) y 0) color_
-      , Vertex (vec3 (x + dw) (y - dh) 0) color_
-      , Vertex (vec3 x (y - dh) 0) color_
-      )
-    ]
+    CellGrid.WebGL.makeCellGrid ( nRows, nCols ) (temperatureAtIndex ( nRows, nCols ))
 
 
 temperatureAtIndex : ( Int, Int ) -> ( Int, Int ) -> Float
@@ -161,7 +71,6 @@ temperatureAtIndex ( rows, cols ) ( i, j ) =
         s2 =
             sin (4.1 * pi * jRatio)
     in
-    -- 0.5 + (0.25 * s1) + (0.25 * s2)
     0.5 + 0.5 * s1 * s2
 
 
