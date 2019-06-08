@@ -5,8 +5,8 @@ module CellGrid
         , CellType(..)
         , Msg(..)
         , CellRenderer
-        , cellGridFromList
-        , emptyCellGrid
+        , fromList
+        , empty
         , map
         , mapWithIndex
         , foldl
@@ -27,7 +27,7 @@ transformed, and rendered as either SVG or HTML.
 
 ## Constructing and rendering CellGrids
 
-@docs cellGridFromList, emptyCellGrid, renderAsHtml, renderAsSvg
+@docs fromList, empty, renderAsHtml, renderAsSvg
 
 ## Work with cells
 
@@ -62,6 +62,7 @@ type CellType
     | Interior
 
 
+
 {-| CellRenderer is a record that provides the information --
 size and color --
 that is needed to render a cell to SVG.  `Color` is as
@@ -87,14 +88,14 @@ type Msg = MouseClick (Int, Int) (Float, Float)
 
 {-|  The empty cell grid. Useful in conjunction with `Maybe.withDefault`
 -}
-emptyCellGrid : CellGrid a
-emptyCellGrid =
+empty : CellGrid a
+empty =
     CellGrid (0, 0) (Array.fromList [])
 
 {-| Construct a Maybe CellGrid from a list of  values of type `a`.
 Here is a  2x2 cell grid of type `Float`:
 
-    > cg = cellGridFromList 2 2 [1.0,2.0,3.0,4.0]
+    > cg = fromList 2 2 [1.0,2.0,3.0,4.0]
       Just (CellGrid (2,2) (Array.fromList [1,2,3,4]))
       : Maybe (CellGrid Float)
 
@@ -102,12 +103,12 @@ If the length of the list is incompatible with the
 given number of rows and columns `Nothing` is returned.
 
 
-    > cellGridFromList 2 2 [1.0,2.0,3.0,4.0, 5.0]
+    > fromList 2 2 [1.0,2.0,3.0,4.0, 5.0]
       Nothing : Maybe (CellGrid Float)
 
 -}
-cellGridFromList : Int -> Int -> List a -> Maybe (CellGrid a)
-cellGridFromList nRows nColumns data =
+fromList : Int -> Int -> List a -> Maybe (CellGrid a)
+fromList nRows nColumns data =
     case List.length data == nRows*nColumns of
         True -> Just <| CellGrid (nRows, nColumns) (Array.fromList data)
         False -> Nothing

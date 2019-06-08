@@ -7,24 +7,33 @@ module Main exposing (main)
 -}
 
 import Browser
-import Html exposing (Html)
+import CellGrid exposing (CellGrid(..), CellRenderer)
+import Color exposing (Color)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
 import Element.Input as Input
-import CellGrid exposing (CellGrid(..), CellRenderer)
-import Time exposing (Posix)
+import Html exposing (Html)
 import TemperatureField
-import Color exposing(Color)
+import Time exposing (Posix)
+
 
 tickInterval : Float
 tickInterval =
     333
 
 
-initialSeed = 3771
-gridWidth = 70
-gridDisplayWidth = 500.0
+initialSeed =
+    3771
+
+
+gridWidth =
+    70
+
+
+gridDisplayWidth =
+    500.0
+
 
 main =
     Browser.element
@@ -59,6 +68,11 @@ type Msg
     | Tick Posix
     | AdvanceAppState
     | Reset
+    | CellGrid CellGrid.Msg
+
+
+
+-- | CellGrid CellGrid.Msg
 
 
 type alias Flags =
@@ -78,19 +92,29 @@ init flags =
     , Cmd.none
     )
 
+
 initialTemperatureField : CellGrid Float
 initialTemperatureField =
     let
-      w = toFloat gridWidth
-      c1 = floor <| 0.6*w
-      c2 =  floor <| 0.2*w
-      r1 = 0.2*w
-      r2 = 0.1*w
+        w =
+            toFloat gridWidth
+
+        c1 =
+            floor <| 0.6 * w
+
+        c2 =
+            floor <| 0.2 * w
+
+        r1 =
+            0.2 * w
+
+        r2 =
+            0.1 * w
     in
     TemperatureField.randomHeatMap ( gridWidth, gridWidth )
-             |> TemperatureField.spot (c1,c1) r1 1.0
-             |> TemperatureField.spot (c2,c2) r1 0.0
-             |> TemperatureField.spot (c2,c2) r2 1.0
+        |> TemperatureField.spot ( c1, c1 ) r1 1.0
+        |> TemperatureField.spot ( c2, c2 ) r1 0.0
+        |> TemperatureField.spot ( c2, c2 ) r2 1.0
 
 
 subscriptions model =
@@ -135,10 +159,32 @@ update msg model =
                         Paused ->
                             Running
             in
-                ( { model | appState = nextAppState }, Cmd.none )
+            ( { model | appState = nextAppState }, Cmd.none )
 
         Reset ->
             ( { model | counter = 0, appState = Ready, heatMap = initialTemperatureField }, Cmd.none )
+
+        CellGrid msg_ ->
+            case msg_ of
+                CellGrid.MouseClick ( i, j ) ( x, y ) ->
+                    let
+                        message =
+                            "(i,j) = (" ++ String.fromInt i ++ ", " ++ String.fromInt j ++ ")"
+
+                        newHeatMap =
+                            case CellGrid.cellAtMatrixIndex ( i, j ) model.heatMap of
+                                Nothing ->
+                                    model.heatMap
+
+                                Just t ->
+                                    case t < 0.5 of
+                                        True ->
+                                            CellGrid.setValue model.heatMap ( i, j ) 1.0
+
+                                        False ->
+                                            CellGrid.setValue model.heatMap ( i, j ) 0.0
+                    in
+                    ( { model | heatMap = newHeatMap }, Cmd.none )
 
 
 
@@ -149,7 +195,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    Element.layout [Background.color <| Element.rgb 0 0 0] (mainColumn model)
+    Element.layout [ Background.color <| Element.rgb 0 0 0 ] (mainColumn model)
 
 
 mainColumn : Model -> Element Msg
@@ -157,7 +203,7 @@ mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
             [ title "Diffusion of Heat"
-            , el [] (CellGrid.renderAsHtml 400 400 cellrenderer model.heatMap |> Element.html)
+            , el [] (CellGrid.renderAsHtml 400 400 cellrenderer model.heatMap |> Element.html |> Element.map CellGrid)
             , row [ spacing 18 ]
                 [ resetButton
                 , runButton model
@@ -165,21 +211,25 @@ mainColumn model =
                 , inputBeta model
                 ]
             , el [ Font.size 14, centerX, Font.color <| gray 0.5 ] (text "Run with 0 < beta < 1.0")
-            , Element.newTabLink [Font.size 14, centerX, Font.color <| Element.rgb 0.4 0.4 1] { url = "https://github.com/jxxcarlson/elm-cell-grid/tree/3.0.0/examples/HeatEquation",
-                              label = el [] (text "Code on GitHub")}
+            , Element.newTabLink [ Font.size 14, centerX, Font.color <| Element.rgb 0.4 0.4 1 ]
+                { url = "https://github.com/jxxcarlson/elm-cell-grid/tree/3.0.0/examples/HeatEquation"
+                , label = el [] (text "Code on GitHub")
+                }
             ]
         ]
 
-gray g = Element.rgb g g g
+
+gray g =
+    Element.rgb g g g
+
 
 cellrenderer : CellRenderer Float
 cellrenderer =
-    {
-         cellSize = gridDisplayWidth/(toFloat gridWidth)
-       , cellColorizer = \z -> Color.rgb z 0 0
-       , defaultColor = Color.rgb 0 0 0
-       , gridLineColor = Color.rgb 180 0 0
-       , gridLineWidth = 0.5
+    { cellSize = gridDisplayWidth / toFloat gridWidth
+    , cellColorizer = \z -> Color.rgb z 0 0
+    , defaultColor = Color.rgb 0 0 0
+    , gridLineColor = Color.rgb 180 0 0
+    , gridLineWidth = 0.5
     }
 
 
