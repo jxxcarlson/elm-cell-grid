@@ -7,7 +7,8 @@ module Main exposing (main)
 -}
 
 import Browser
-import CellGrid exposing (CellGrid(..), CellRenderer)
+import CellGrid exposing (CellGrid(..))
+import CellGrid.Render exposing (CellRenderer)
 import Color exposing (Color)
 import Element exposing (..)
 import Element.Background as Background
@@ -68,7 +69,7 @@ type Msg
     | Tick Posix
     | AdvanceAppState
     | Reset
-    | CellGrid CellGrid.Msg
+    | CellGrid CellGrid.Render.Msg
 
 
 
@@ -166,7 +167,7 @@ update msg model =
 
         CellGrid msg_ ->
             case msg_ of
-                CellGrid.MouseClick ( i, j ) ( x, y ) ->
+                CellGrid.Render.MouseClick ( i, j ) ( x, y ) ->
                     let
                         message =
                             "(i,j) = (" ++ String.fromInt i ++ ", " ++ String.fromInt j ++ ")"
@@ -203,7 +204,7 @@ mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
             [ title "Diffusion of Heat"
-            , el [] (CellGrid.renderAsHtml 400 400 cellrenderer model.heatMap |> Element.html |> Element.map CellGrid)
+            , el [] (CellGrid.Render.renderAsHtml 400 400 cellrenderer model.heatMap |> Element.html |> Element.map CellGrid)
             , row [ spacing 18 ]
                 [ resetButton
                 , runButton model

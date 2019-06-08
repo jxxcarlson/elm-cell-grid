@@ -1,33 +1,24 @@
-module CellGrid
-    exposing
-        ( CellGrid(..)
-        , classifyCell
-        , CellType(..)
-        , Msg(..)
-        , CellRenderer
-        , fromList
-        , empty
-        , map
-        , mapWithIndex
-        , foldl
-        , transform
-        , cellAtMatrixIndex
-        , renderAsSvg
-        , renderAsHtml
-        , setValue
-        )
+module CellGrid exposing
+    ( CellGrid(..), CellType(..)
+    , fromList, empty
+    , map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue
+    , matrixIndex, matrixIndices
+    )
 
 {-| The CellGrid package provides a type for representing
-a rectangular grid of cells.  CellGrids can be created,
+a rectangular grid of cells. CellGrids can be created,
 transformed, and rendered as either SVG or HTML.
+
 
 ## Types
 
 @docs CellGrid, CellType, CellRenderer, Msg
 
+
 ## Constructing and rendering CellGrids
 
 @docs fromList, empty, renderAsHtml, renderAsSvg
+
 
 ## Work with cells
 
@@ -36,64 +27,33 @@ transformed, and rendered as either SVG or HTML.
 -}
 
 import Array exposing (Array)
-import TypedSvg.Core exposing(Svg)
-import TypedSvg.Types exposing(Fill(..))
-import TypedSvg exposing (svg, rect,  g)
-import TypedSvg.Attributes exposing(viewBox, stroke,fill)
-import TypedSvg.Attributes.InPx exposing (height, width, x, y,  strokeWidth)
-import Html exposing (Html)
-import Color exposing (Color)
-import Html.Events.Extra.Mouse as Mouse
 
 
 {-| A value of type `CellGrid a` is a rectangular array
 of values of type a.
-
 -}
 type CellGrid a
     = CellGrid ( Int, Int ) (Array a)
 
 
 {-| A cell can be in the interior of the grid,
-on an edge, on in a cornder -}
+on an edge, on in a cornder
+-}
 type CellType
     = Corner
     | Edge
     | Interior
 
 
-
-{-| CellRenderer is a record that provides the information --
-size and color --
-that is needed to render a cell to SVG.  `Color` is as
-defined in the package `avh4/elm-color`, e.g. `Color.rgb 1 0 0`,
-which is bright red.
-
--}
-type alias CellRenderer a = {
-       cellSize : Float
-     , gridLineWidth : Float
-     , cellColorizer : a -> Color
-     , defaultColor : Color
-     , gridLineColor: Color
-
-  }
-
-{-| The MouseClick message sends the matrix index (i,j)
-of the cell on which the user has clicked as well
-as the local (x,y) coordinates of the cell.
-
--}
-type Msg = MouseClick (Int, Int) (Float, Float)
-
-{-|  The empty cell grid. Useful in conjunction with `Maybe.withDefault`
+{-| The empty cell grid. Useful in conjunction with `Maybe.withDefault`
 -}
 empty : CellGrid a
 empty =
-    CellGrid (0, 0) (Array.fromList [])
+    CellGrid ( 0, 0 ) (Array.fromList [])
 
-{-| Construct a Maybe CellGrid from a list of  values of type `a`.
-Here is a  2x2 cell grid of type `Float`:
+
+{-| Construct a Maybe CellGrid from a list of values of type `a`.
+Here is a 2x2 cell grid of type `Float`:
 
     > cg = fromList 2 2 [1.0,2.0,3.0,4.0]
       Just (CellGrid (2,2) (Array.fromList [1,2,3,4]))
@@ -102,16 +62,18 @@ Here is a  2x2 cell grid of type `Float`:
 If the length of the list is incompatible with the
 given number of rows and columns `Nothing` is returned.
 
-
     > fromList 2 2 [1.0,2.0,3.0,4.0, 5.0]
       Nothing : Maybe (CellGrid Float)
 
 -}
 fromList : Int -> Int -> List a -> Maybe (CellGrid a)
 fromList nRows nColumns data =
-    case List.length data == nRows*nColumns of
-        True -> Just <| CellGrid (nRows, nColumns) (Array.fromList data)
-        False -> Nothing
+    case List.length data == nRows * nColumns of
+        True ->
+            Just <| CellGrid ( nRows, nColumns ) (Array.fromList data)
+
+        False ->
+            Nothing
 
 
 {-| Map a function over a CellGrid:
@@ -121,14 +83,14 @@ fromList nRows nColumns data =
 
 -}
 map : (a -> a) -> CellGrid a -> CellGrid a
-map f (CellGrid (nRows, nCols) cells) =
-    (CellGrid (nRows, nCols) (Array.map f cells))
+map f (CellGrid ( nRows, nCols ) cells) =
+    CellGrid ( nRows, nCols ) (Array.map f cells)
 
 
 {-| Fold a reducer (a -> b -> b) over a CellGrid a)
 -}
 foldl : (a -> b -> b) -> b -> CellGrid a -> b
-foldl reducer initialValue (CellGrid (_, _) cells) =
+foldl reducer initialValue (CellGrid ( _, _ ) cells) =
     Array.foldl reducer initialValue cells
 
 
@@ -136,22 +98,23 @@ foldl reducer initialValue (CellGrid (_, _) cells) =
 Used when the transformed value depends on its matrixIndex as well
 as its value
 -}
-mapWithIndex : ((Int,Int) -> a -> a) -> CellGrid a -> CellGrid a
-mapWithIndex cellTransformer (CellGrid (nRows, nCols) cells) =
+mapWithIndex : (( Int, Int ) -> a -> a) -> CellGrid a -> CellGrid a
+mapWithIndex cellTransformer (CellGrid ( nRows, nCols ) cells) =
     let
-        indexedCellTransformer = (\k a -> cellTransformer (matrixIndex (nRows, nCols) k) a)
+        indexedCellTransformer =
+            \k a -> cellTransformer (matrixIndex ( nRows, nCols ) k) a
     in
-   (CellGrid (nRows, nCols) (Array.indexedMap indexedCellTransformer cells))
+    CellGrid ( nRows, nCols ) (Array.indexedMap indexedCellTransformer cells)
+
 
 {-| Transform a CellGrid using a function
 
     (Int, Int) -> CellGrid a -> a)
 
 -}
-transform : ((Int, Int) -> CellGrid a -> a) -> CellGrid a -> CellGrid a
+transform : (( Int, Int ) -> CellGrid a -> a) -> CellGrid a -> CellGrid a
 transform newCellValue grid =
     List.foldl (\( i, j ) acc -> setValue acc ( i, j ) (newCellValue ( i, j ) grid)) grid (matrixIndices grid)
-
 
 
 rows : CellGrid a -> Int
@@ -172,7 +135,7 @@ dimensions (CellGrid idx _) =
 {-| Consider a 1D array of elements which represents
 a 2D array with n rows. Then `index  n (i,j)`
 is the index in the 1D array of the corresponding
-element in the 2D array at location (i,j)`
+element in the 2D array at location (i,j)\`
 -}
 index : Int -> ( Int, Int ) -> Int
 index nRows ( row, col ) =
@@ -199,11 +162,10 @@ cellAtMatrixIndex ( i, j ) grid =
         (CellGrid ( nRows, _ ) array) =
             grid
     in
-        Array.get (index nRows ( i, j )) array
+    Array.get (index nRows ( i, j )) array
 
 
 {-| Set the value of the cell at location (i,j)
-
 -}
 setValue : CellGrid a -> ( Int, Int ) -> a -> CellGrid a
 setValue (CellGrid ( nRows, nCols ) values) ( i, j ) value =
@@ -211,10 +173,10 @@ setValue (CellGrid ( nRows, nCols ) values) ( i, j ) value =
         k =
             index nRows ( i, j )
     in
-        (CellGrid ( nRows, nCols ) (Array.set k value values))
+    CellGrid ( nRows, nCols ) (Array.set k value values)
 
 
-{-| return the type of the cell at location (i,j).  Thus
+{-| return the type of the cell at location (i,j). Thus
 classifyCell grid (0,0) = Corner
 -}
 classifyCell : CellGrid a -> ( Int, Int ) -> CellType
@@ -229,25 +191,29 @@ classifyCell cellGrid ( i, j ) =
         mci =
             nCols - 1
     in
-        case i == 0 || j == 0 || i == mri || j == mci of
-            False ->
-                Interior
+    case i == 0 || j == 0 || i == mri || j == mci of
+        False ->
+            Interior
 
-            True ->
-                if i == 0 && j == 0 then
-                    Corner
-                else if i == 0 && j == mci then
-                    Corner
-                else if i == mri && j == 0 then
-                    Corner
-                else if i == mri && j == mci then
-                    Corner
-                else
-                    Edge
+        True ->
+            if i == 0 && j == 0 then
+                Corner
 
-{-| Return a list of all matrix     indices (i,j) of a grid.
+            else if i == 0 && j == mci then
+                Corner
+
+            else if i == mri && j == 0 then
+                Corner
+
+            else if i == mri && j == mci then
+                Corner
+
+            else
+                Edge
+
+
+{-| Return a list of all matrix indices (i,j) of a grid.
 Useful for mapping.
-
 -}
 matrixIndices : CellGrid a -> List ( Int, Int )
 matrixIndices (CellGrid ( nRows, nCols ) _) =
@@ -255,54 +221,4 @@ matrixIndices (CellGrid ( nRows, nCols ) _) =
         n =
             nRows * nCols
     in
-        List.map (matrixIndex ( nRows, nCols )) (List.range 0 (n - 1))
-
-
-
-
---
--- RENDER GRID
---
-
-{-| Render a cell grid as Html.  The first two parameters
-are the width and height of the rendered grid in pixels.
-
--}
-renderAsHtml : Float -> Float -> CellRenderer a -> CellGrid a -> Html Msg
-renderAsHtml width_ height_ cr cellGrid =
-        svg
-            [ height  height_
-            , width  width_
-            , viewBox 0 0 width_ height_
-            ]
-            [ renderAsSvg cr cellGrid ]
-
-
-{-| Render a cell grid as SVG
-
--}
-renderAsSvg : CellRenderer a -> CellGrid a -> Svg Msg
-renderAsSvg cr cellGrid =
-    matrixIndices cellGrid
-        |> List.map (renderCell cr cellGrid)
-        |> g []
-
-
-renderCell : CellRenderer a -> CellGrid a -> ( Int, Int ) -> Svg Msg
-renderCell cr cellGrid ( i, j ) =
-    let
-       size = cr.cellSize
-       color = Maybe.map cr.cellColorizer (cellAtMatrixIndex ( i, j ) cellGrid) |> Maybe.withDefault cr.defaultColor
-    in
-      rect
-              [ width size
-              , height size
-              , x  <| size * (toFloat i)
-              , y  <| size * (toFloat j)
-              , fill (Fill color)
-              , Mouse.onDown (.clientPos >> MouseClick (i,j))
-              , strokeWidth  cr.gridLineWidth
-              , stroke cr.gridLineColor
-              ]
-              []
-
+    List.map (matrixIndex ( nRows, nCols )) (List.range 0 (n - 1))
