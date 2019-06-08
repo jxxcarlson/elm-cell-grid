@@ -1,8 +1,9 @@
 # CellGrid
 
-The CellGrid package provides a type for representing
+The CellGrid package provides a type for representing and rendering
 a rectangular grid of cells.  The grid can respond
-to mouse clicks.
+to mouse clicks, and there are three rendering options: HTML, SVG,
+and WebGL.  Here is what a cellGrid structure looks like:
 
 ```
 type CellGrid a
@@ -11,19 +12,19 @@ type CellGrid a
 
 There are two on-line demo applications: [Conway's game of life](https://jxxcarlson.github.io/app/gameoflife2.html), and [a simulation
 of heat conduction](https://jxxcarlson.github.io/app/heat-model.html).  See the `examples` folder on [GitHub](https://github.com/jxxcarlson/elm-cell-grid)
-for the code. In the first example, we use the type 
-`CellGrid State`, where 
+for the code. In the first example, we use the type
+`CellGrid State`, where
 
 ```
 type State = Occupied | Unoccupied
 ```
 
 In the second, we use `CellGrid Float`.  The idea is the
-cell contents (the floating point number) represents 
+cell contents (the floating point number) represents
 the temperature of the cell.
 
-One can create a CellGrid, transform it, and render it both SVG 
-and HTML, as in the figure below (taken from the simulation in 
+One can create a CellGrid, transform it, and render it both SVG
+and HTML, as in the figure below (taken from the simulation in
 examples/HeatEquation)
 
 Note the type
@@ -33,7 +34,7 @@ type Msg = MouseClick (Int, Int) (Float, Float)
 ```
 
 It is referenced by the function which renders a cell
-so that when the user clicks on a cell, a message 
+so that when the user clicks on a cell, a message
 is sent containing the matrix index *(i,j)* of the cell
 in question as well as its local floating
 point coordinates *(x,y)*.  In `./examples/GameOfLife.elm`,
@@ -57,7 +58,7 @@ In the example below, we create a 2x2 `CellGrid Float`.
 Array.fromList [1,2,3,4]
     : Array Float
 ```
-    
+
 ```
 > cg = CellGrid (2,2) cells
 CellGrid (2,2) (Array.fromList [1,2,3,4])
@@ -72,12 +73,12 @@ in a 2D array:
 Just 4 : Maybe Float
 ```
 
-## Rendering a CellGrid
+## Rendering a CellGrid (Html and SVG)
 
 Render a `CellGrid` using the function
 
 ```
-renderAsHtml : Int -> Int ->  CellRenderer a 
+renderAsHtml : Int -> Int ->  CellRenderer a
                -> CellGrid a -> Html msg
 ```
 
@@ -97,7 +98,7 @@ type alias CellRenderer a = {
 ```
 
 A `ColorValue` is a type alias for `String`.  Here is a typical
-`CellRenderer`: 
+`CellRenderer`:
 
 ```
 type alias CellRenderer a = {
@@ -109,13 +110,13 @@ type alias CellRenderer a = {
   }
 ```
 
-For a `CellGrid Float`, the contents of a cell is real number. 
-The above `cellColorizer` function converts cell contents to a 
+For a `CellGrid Float`, the contents of a cell is real number.
+The above `cellColorizer` function converts cell contents to a
 string that SVG understands as representing an RGB color, in this
-case, a shade of red.  See `examples/HeatEquation/Main.elm` for 
+case, a shade of red.  See `examples/HeatEquation/Main.elm` for
 an illustration of how this is used.
 
-By using cellColorizers, one can render any kind of CellGrid.   
+By using cellColorizers, one can render any kind of CellGrid.
 For example, in Conway's Game of Life,  one  uses the function
 
 
@@ -130,3 +131,31 @@ cellrenderer =
        , gridLineWidth = 0.5
     }
 ```
+
+## Rendering a CellGrid (WebGL)
+
+Please consult `./examples/HeatMap2.elm`.
+One uses
+
+```
+CellGrid.WebGL.cellGridToHtml 700 700
+   (testGrid ( 200, 200 )) colorMap
+```
+
+to render the 200x200 CellGrid `testGrid ( 200, 200 )`.
+The `colorMap` function transforms scalars (Float),
+to color vectors (Vec3).  Here is a simple example:
+
+```
+colorMap : Float -> Vec3
+colorMap t =
+    vec3 t 0 0
+```
+
+It is also possible to render a mesh, as in  `./examples/HeatMap.elm`:
+
+```
+CellGrid.WebGL.meshToHtml 700 700 (testMesh 200 0.04)
+```
+
+The value `testMesh 200 0.04` is a mesh.

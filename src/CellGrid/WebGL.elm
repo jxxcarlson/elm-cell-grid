@@ -1,6 +1,6 @@
 module CellGrid.WebGL exposing
     ( Colorizer, Vertex
-    , toHtml
+    , cellGridToHtml, meshToHtml
     , meshFromCellGrid, meshWithColorizer
     )
 
@@ -14,7 +14,7 @@ module CellGrid.WebGL exposing
 
 ## Rendering functions
 
-@docs toHtml
+@docs cellGridToHtml, meshToHtml
 
 
 ## Work with cells
@@ -31,23 +31,6 @@ import Json.Decode exposing (Value)
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import WebGL exposing (Mesh, Shader)
-
-
-{-| Render a WebGL "drawing" to a given rectangle on the screen.
--}
-toHtml : Int -> Int -> WebGL.Mesh Vertex -> Html.Html msg
-toHtml width_ height_ mesh =
-    WebGL.toHtml
-        [ width width_
-        , height height_
-        , style "display" "block"
-        ]
-        [ WebGL.entity
-            vertexShader
-            fragmentShader
-            mesh
-            { perspective = Mat4.identity }
-        ]
 
 
 {-| The type of vertices of triangles: define position and color.
@@ -67,6 +50,60 @@ latter given by its row and column indices
 -}
 type alias Colorizer =
     ( Int, Int ) -> Vec3
+
+
+{-| Render a WebGL "drawing" to a given rectangle on the screen.
+-}
+meshToHtml : Int -> Int -> WebGL.Mesh Vertex -> Html.Html msg
+meshToHtml width_ height_ mesh =
+    WebGL.toHtml
+        [ width width_
+        , height height_
+        , style "display" "block"
+        ]
+        [ WebGL.entity
+            vertexShader
+            fragmentShader
+            mesh
+            { perspective = Mat4.identity }
+        ]
+
+
+{-| Render a CellGrid to a width\_ x height\_ rectangle on the screen using
+a function temperatureMap which transforms scalars to color vectors
+-}
+cellGridToHtml : Int -> Int -> CellGrid Float -> (Float -> Vec3) -> Html.Html msg
+cellGridToHtml width_ height_ cellGrid temperatureMap =
+    let
+        (CellGrid ( nRows, nCols ) array) =
+            cellGrid
+
+        dw =
+            toFloat width_
+                / toFloat (250 * nRows)
+
+        dh =
+            toFloat height_
+                / toFloat (250 * nCols)
+    in
+    WebGL.toHtml
+        [ width width_
+        , height height_
+        , style "display" "block"
+        ]
+        [ WebGL.entity
+            vertexShader
+            fragmentShader
+            (meshFromCellGrid ( dw, dh ) temperatureMap cellGrid)
+            { perspective = Mat4.identity }
+        ]
+
+
+
+-- testMesh : Int -> Float -> Mesh Vertex
+-- testMesh n ds =
+--     testGrid ( n, n )
+--         |> CellGrid.WebGL.meshFromCellGrid ( ds, ds ) redMap
 
 
 {-| Crreate a rows x cols Vertex Mesh representing an array of rectanagles of

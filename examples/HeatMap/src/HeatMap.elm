@@ -27,7 +27,7 @@ main =
 
 view : Float -> Html msg
 view t =
-    CellGrid.WebGL.toHtml 700 700 (testMesh 200 0.04)
+    CellGrid.WebGL.meshToHtml 700 700 (testMesh 200 0.04)
 
 
 testMesh : Int -> Float -> Mesh Vertex

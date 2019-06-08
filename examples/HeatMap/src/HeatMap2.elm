@@ -27,18 +27,18 @@ main =
 
 view : Float -> Html msg
 view t =
-    CellGrid.WebGL.toHtml 700 700 (testMesh 200 0.04)
+    CellGrid.WebGL.cellGridToHtml 700 700 (testGrid ( 200, 200 )) colorMap
 
 
 testMesh : Int -> Float -> Mesh Vertex
 testMesh n ds =
     testGrid ( n, n )
-        |> CellGrid.WebGL.meshFromCellGrid ( ds, ds ) redMap
+        |> CellGrid.WebGL.meshFromCellGrid ( ds, ds ) colorMap
 
 
-redMap : Float -> Vec3
-redMap t =
-    vec3 (1.0 * t) 0 0
+colorMap : Float -> Vec3
+colorMap t =
+    vec3 t 0 0
 
 
 testGrid : ( Int, Int ) -> CellGrid Float
