@@ -60,22 +60,15 @@ view t =
         ]
 
 
-
--- renderHeatMap : CellGrid Float -> Html msg
--- renderHeatMap ( CellGrid ( nRows, nCols ), array ) =
---     1
--- createGrid : (Int, Int) -> ((Int, Int) -> Vec3) -> Mesh Vertex
--- createGrid (nrows, ncols) colorizer =
---
---
--- mesh : Colorizer -> (Int, Int) -> (Float, Float) -> Mesh Vertex
--- mesh colorizer (rows, cols) (celWidth, cellHeight) =
--- makeMesh : (Int, Int)
-
-
 testMesh : Int -> Float -> Mesh Vertex
 testMesh n ds =
     meshWithColorizer (colorAtMatrixIndex ( n, n )) ( n, n ) ( ds, ds )
+
+
+testMesh2 : Int -> Float -> Mesh Vertex
+testMesh2 n ds =
+    testGrid ( n, n )
+        |> meshFromCellGrid ( ds, ds ) redMap
 
 
 meshWithColorizer : Colorizer -> ( Int, Int ) -> ( Float, Float ) -> Mesh Vertex
@@ -102,8 +95,29 @@ temperatureArray (CellGrid ( rows, cols ) array) =
         |> Array.toList
 
 
-meshFromCellGrid : CellGrid Float -> ( Float, Float ) -> (Float -> Vec3) -> Mesh Vertex
-meshFromCellGrid cellGrid ( dw, dh ) temperatureMap =
+redMap : Float -> Vec3
+redMap t =
+    vec3 (1.0 * t) 0 0
+
+
+makeCellGrid : ( Int, Int ) -> (( Int, Int ) -> Float) -> CellGrid Float
+makeCellGrid ( nRows, nCols ) temperatureMap =
+    let
+        n =
+            nRows * nCols
+    in
+    List.map (matrixIndex ( nRows, nCols )) (List.range 0 (n - 1))
+        |> List.map (\( i, j ) -> temperatureMap ( i, j ))
+        |> (\list -> CellGrid ( nRows, nCols ) (Array.fromList list))
+
+
+testGrid : ( Int, Int ) -> CellGrid Float
+testGrid ( nRows, nCols ) =
+    makeCellGrid ( nRows, nCols ) (temperatureAtIndex ( nRows, nCols ))
+
+
+meshFromCellGrid : ( Float, Float ) -> (Float -> Vec3) -> CellGrid Float -> Mesh Vertex
+meshFromCellGrid ( dw, dh ) temperatureMap cellGrid =
     let
         rect =
             rectangleFromElement temperatureMap ( dw, dh )
@@ -211,6 +225,28 @@ fragmentShader =
 {- For testing vvvvvv -}
 
 
+temperatureAtIndex : ( Int, Int ) -> ( Int, Int ) -> Float
+temperatureAtIndex ( rows, cols ) ( i, j ) =
+    let
+        iRatio =
+            toFloat i / toFloat rows
+
+        jRatio =
+            toFloat j / toFloat cols
+
+        pi =
+            3.1416
+
+        s1 =
+            sin (8.7 * pi * iRatio)
+
+        s2 =
+            sin (4.1 * pi * jRatio)
+    in
+    -- 0.5 + (0.25 * s1) + (0.25 * s2)
+    0.5 + 0.5 * s1 * s2
+
+
 colorAtMatrixIndex : ( Int, Int ) -> ( Int, Int ) -> Vec3
 colorAtMatrixIndex ( rows, cols ) ( i, j ) =
     let
@@ -227,6 +263,6 @@ colorAtMatrixIndex ( rows, cols ) ( i, j ) =
             sin (2.7 * pi * iRatio)
 
         s2 =
-            sin (1.1 * pi * jRatio)
+            sin (4.1 * pi * jRatio)
     in
     vec3 (0.5 + 0.3 * s1) 0.0 (0.5 + 0.5 * s2)
