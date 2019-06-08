@@ -4,3 +4,6 @@ mqke.sh
 make.sh
 index.html
 *.pxm
+examples/HeatEquation/heat-model-gl.html
+examples/HeatEquation/heat-model.html
+examples/HeatEquation/publish.sh
