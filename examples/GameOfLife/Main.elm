@@ -7,18 +7,18 @@ module Main exposing (main)
 -}
 
 import Browser
-import Html exposing (Html)
+import CellGrid exposing (CellGrid)
+import CellGrid.Render exposing (CellRenderer)
+import Color
+import Conway exposing (State(..))
 import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
 import Element.Input as Input
-import CellGrid exposing (CellGrid, CellRenderer)
-import Time exposing (Posix)
-import Conway exposing(State(..))
-import Random
-import Color
+import Html exposing (Html)
 import Html.Events.Extra.Mouse as Mouse
-
+import Random
+import Time exposing (Posix)
 
 
 tickInterval : Float
@@ -26,14 +26,25 @@ tickInterval =
     333
 
 
-initialDensity = 0.3
-initialSeed = 3771
-gridWidth = 100
-gridDisplayWidth = 450.0
+initialDensity =
+    0.3
 
 
+initialSeed =
+    3771
 
-lowDensityThreshold = 0.00
+
+gridWidth =
+    100
+
+
+gridDisplayWidth =
+    450.0
+
+
+lowDensityThreshold =
+    0.0
+
 
 main =
     Browser.element
@@ -55,7 +66,7 @@ type alias Model =
     , currentDensity : Float
     , seed : Int
     , seedString : String
-    , randomPair : (Int, Int)
+    , randomPair : ( Int, Int )
     , cellMap : CellGrid State
     , message : String
     }
@@ -66,9 +77,12 @@ type AppState
     | Running
     | Paused
 
+
+
 --
 -- MSG
 --
+
 
 type Msg
     = NoOp
@@ -78,8 +92,8 @@ type Msg
     | Tick Posix
     | AdvanceAppState
     | Reset
-    | NewPair (Int, Int)
-    | CellGrid CellGrid.Msg
+    | NewPair ( Int, Int )
+    | CellGrid CellGrid.Render.Msg
 
 
 type alias Flags =
@@ -97,13 +111,14 @@ init flags =
       , densityString = String.fromFloat initialDensity
       , currentDensity = initialDensity
       , seed = initialSeed
-      , seedString  = String.fromInt initialSeed
-      , randomPair = (0,0)
+      , seedString = String.fromInt initialSeed
+      , randomPair = ( 0, 0 )
       , cellMap = initialCellGrid initialSeed initialDensity
       , message = "Click to make cell."
       }
     , Cmd.none
     )
+
 
 initialCellGrid : Int -> Float -> CellGrid State
 initialCellGrid seed density =
@@ -130,11 +145,11 @@ update msg model =
 
         InputSeed str ->
             case String.toInt str of
-                 Nothing ->
-                     ( { model | seedString = str }, Cmd.none )
+                Nothing ->
+                    ( { model | seedString = str }, Cmd.none )
 
-                 Just seed_ ->
-                            ( { model | seedString = str, seed = seed_ }, Cmd.none )
+                Just seed_ ->
+                    ( { model | seedString = str, seed = seed_ }, Cmd.none )
 
         Step ->
             ( { model | counter = model.counter + 1, cellMap = Conway.updateCells model.cellMap }, Cmd.none )
@@ -142,12 +157,13 @@ update msg model =
         Tick t ->
             case model.appState == Running of
                 True ->
-                    ( { model |
-                         counter = model.counter + 1
-                        , cellMap = Conway.updateCells  model.cellMap |> generateNewLife model
+                    ( { model
+                        | counter = model.counter + 1
+                        , cellMap = Conway.updateCells model.cellMap |> generateNewLife model
                         , currentDensity = currentDensity model
-                      },
-                        Random.generate NewPair generatePair)
+                      }
+                    , Random.generate NewPair generatePair
+                    )
 
                 False ->
                     ( model, Cmd.none )
@@ -165,40 +181,54 @@ update msg model =
                         Paused ->
                             Running
             in
-                ( { model | appState = nextAppState }, Cmd.none )
+            ( { model | appState = nextAppState }, Cmd.none )
 
         Reset ->
-            ( { model | counter = 0, trial = model.trial + 1,
-                appState = Ready, cellMap = initialCellGrid (model.seed + model.trial + 1) model.density}, Cmd.none )
+            ( { model
+                | counter = 0
+                , trial = model.trial + 1
+                , appState = Ready
+                , cellMap = initialCellGrid (model.seed + model.trial + 1) model.density
+              }
+            , Cmd.none
+            )
 
-        NewPair (i, j) ->
-           ({ model | randomPair = (i,j)}, Cmd.none)
+        NewPair ( i, j ) ->
+            ( { model | randomPair = ( i, j ) }, Cmd.none )
 
         CellGrid msg_ ->
             case msg_ of
-                CellGrid.MouseClick (i, j) (x, y) ->
-                  let
-                    message = "(i,j) = (" ++ String.fromInt i ++ ", " ++ String.fromInt j ++ ")"
-                  in
-                    ({ model | message = message
-                         , cellMap = Conway.toggleState (i,j) model.cellMap }, Cmd.none)
-
+                CellGrid.Render.MouseClick ( i, j ) ( x, y ) ->
+                    let
+                        message =
+                            "(i,j) = (" ++ String.fromInt i ++ ", " ++ String.fromInt j ++ ")"
+                    in
+                    ( { model
+                        | message = message
+                        , cellMap = Conway.toggleState ( i, j ) model.cellMap
+                      }
+                    , Cmd.none
+                    )
 
 
 generateNewLife : Model -> CellGrid State -> CellGrid State
 generateNewLife model cg =
     case model.currentDensity < lowDensityThreshold of
-        False -> cg
+        False ->
+            cg
+
         True ->
             let
-                (i,j) = model.randomPair
+                ( i, j ) =
+                    model.randomPair
             in
-                Conway.occupy (i,j) cg
-
+            Conway.occupy ( i, j ) cg
 
 
 generatePair =
     Random.pair (Random.int 0 (gridWidth - 1)) (Random.int 0 (gridWidth - 1))
+
+
 
 --
 -- VIEW
@@ -207,7 +237,7 @@ generatePair =
 
 view : Model -> Html Msg
 view model =
-    Element.layout [Background.color dark] (mainColumn model)
+    Element.layout [ Background.color dark ] (mainColumn model)
 
 
 mainColumn : Model -> Element Msg
@@ -215,23 +245,28 @@ mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
             [ title "Conway's Game of Life"
-            , el [centerX] (CellGrid.renderAsHtml gridDisplayWidth gridDisplayWidth cellrenderer model.cellMap
-               |> Element.html |> Element.map CellGrid)
+            , el [ centerX ]
+                (CellGrid.Render.renderAsHtml gridDisplayWidth gridDisplayWidth cellrenderer model.cellMap
+                    |> Element.html
+                    |> Element.map CellGrid
+                )
             , row [ spacing 18 ]
                 [ resetButton
                 , runButton model
                 , row [ spacing 8 ] [ stepButton, counterDisplay model ]
                 , inputDensity model
                 ]
-            , row [Font.size 14, centerX, spacing 24] [
-                 el [ width (px 150), Font.color light] (text <| "Current density = " ++ String.fromFloat model.currentDensity)
-                 , Element.newTabLink [Font.size 14, centerX, Font.color <| Element.rgb 0.4 0.4 1]
-                     { url = "https://github.com/jxxcarlson/elm-cell-grid/tree/master/examples/GameOfLife",
-                                               label = el [] (text "Code on GitHub")}
-                 , el [ width (px 100), Font.color light] (text <| model.message)
+            , row [ Font.size 14, centerX, spacing 24 ]
+                [ el [ width (px 150), Font.color light ] (text <| "Current density = " ++ String.fromFloat model.currentDensity)
+                , Element.newTabLink [ Font.size 14, centerX, Font.color <| Element.rgb 0.4 0.4 1 ]
+                    { url = "https://github.com/jxxcarlson/elm-cell-grid/tree/master/examples/GameOfLife"
+                    , label = el [] (text "Code on GitHub")
+                    }
+                , el [ width (px 100), Font.color light ] (text <| model.message)
                 ]
             ]
         ]
+
 
 
 --onMouseClick : Attribute Msg
@@ -242,30 +277,37 @@ mainColumn model =
 currentDensity : Model -> Float
 currentDensity model =
     let
-        population = Conway.occupied model.cellMap |> toFloat
-        capacity = gridWidth*gridWidth |> toFloat
+        population =
+            Conway.occupied model.cellMap |> toFloat
+
+        capacity =
+            gridWidth * gridWidth |> toFloat
     in
-        population/capacity |> roundTo 2
+    population / capacity |> roundTo 2
 
 
 roundTo : Int -> Float -> Float
 roundTo places x =
     let
-        k = 10^places |> toFloat
+        k =
+            10 ^ places |> toFloat
     in
-     (round (k*x) |> toFloat)/k
+    (round (k * x) |> toFloat) / k
 
 
 cellrenderer =
-    {
-         cellSize = gridDisplayWidth/(toFloat gridWidth)
-       , cellColorizer = \state ->
+    { cellSize = gridDisplayWidth / toFloat gridWidth
+    , cellColorizer =
+        \state ->
             case state of
-               Occupied -> Color.rgb 0 0 1
-               Unoccupied -> Color.rgb 0 0 0
-       , defaultColor = Color.rgb 0 0 0
-       , gridLineWidth = 0.5
-       , gridLineColor = Color.rgb 0 0 1
+                Occupied ->
+                    Color.rgb 0 0 1
+
+                Unoccupied ->
+                    Color.rgb 0 0 0
+    , defaultColor = Color.rgb 0 0 0
+    , gridLineWidth = 0.5
+    , gridLineColor = Color.rgb 0 0 1
     }
 
 
@@ -298,6 +340,7 @@ inputDensity model =
         , label = Input.labelLeft [] <| el [ Font.size buttonFontSize, moveDown 8.5, Font.color light ] (text "Initial density ")
         }
 
+
 inputSeed : Model -> Element Msg
 inputSeed model =
     Input.text [ width (px 60), Font.size buttonFontSize ]
@@ -306,6 +349,7 @@ inputSeed model =
         , placeholder = Nothing
         , label = Input.labelLeft [] <| el [ Font.size buttonFontSize, moveDown 12 ] (text "seed ")
         }
+
 
 stepButton : Element Msg
 stepButton =
@@ -364,10 +408,18 @@ appStateAsString appState =
 -- STYLE
 --
 
-dark = gray 0.1
-light = gray 0.8
 
-gray g = rgb g g g
+dark =
+    gray 0.1
+
+
+light =
+    gray 0.8
+
+
+gray g =
+    rgb g g g
+
 
 mainColumnStyle =
     [ centerX
