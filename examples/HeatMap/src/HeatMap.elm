@@ -4,7 +4,6 @@ module HeatMap exposing (main)
    Rotating triangle, that is a "hello world" of the WebGL
 -}
 
-import Array
 import Browser
 import Browser.Events exposing (onAnimationFrameDelta)
 import CellGrid exposing (CellGrid(..), matrixIndex)
@@ -12,7 +11,6 @@ import CellGrid.WebGL exposing (Colorizer, Vertex)
 import Html exposing (Html)
 import Html.Attributes exposing (height, style, width)
 import Json.Decode exposing (Value)
-import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import WebGL exposing (Mesh)
 
@@ -29,7 +27,7 @@ main =
 
 view : Float -> Html msg
 view t =
-    CellGrid.WebGL.toHtml (testMesh 100 0.03)
+    CellGrid.WebGL.toHtml 700 700 (testMesh 200 0.04)
 
 
 testMesh : Int -> Float -> Mesh Vertex

@@ -10,15 +10,10 @@ import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import WebGL exposing (Mesh, Shader)
 
 
-gridSize : Int
-gridSize =
-    100
-
-
-toHtml mesh =
+toHtml width_ height_ mesh =
     WebGL.toHtml
-        [ width 400
-        , height 400
+        [ width width_
+        , height height_
         , style "display" "block"
         ]
         [ WebGL.entity
@@ -50,8 +45,8 @@ meshWithColorizer colorizer ( rows, cols ) ( dw, dh ) =
         rect =
             rectangleAtIndex colorizer ( dw, dh )
     in
-    List.range 0 (gridSize * gridSize - 1)
-        |> List.map (matrixIndex ( gridSize, gridSize ))
+    List.range 0 (rows * cols - 1)
+        |> List.map (matrixIndex ( rows, cols ))
         |> List.map rect
         |> List.concat
         |> WebGL.triangles
