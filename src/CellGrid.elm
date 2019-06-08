@@ -142,7 +142,7 @@ index nRows ( row, col ) =
     nRows * row + col
 
 
-{-| Conversely, `matrixIndex (nRows, nCols) k` is the
+{-| Conversely, `(nRows, nCols) k` is the
 2D array index `(i,j)` of the element al index `k`
 -}
 matrixIndex : ( Int, Int ) -> Int -> ( Int, Int )

@@ -1,4 +1,4 @@
-module HeatMap exposing (main)
+module HeatMap2 exposing (main)
 
 {-
    Rotating triangle, that is a "hello world" of the WebGL
@@ -32,7 +32,8 @@ view t =
 
 testMesh : Int -> Float -> Mesh Vertex
 testMesh n ds =
-    CellGrid.WebGL.meshWithColorizer (colorAtMatrixIndex ( n, n )) ( n, n ) ( ds, ds )
+    testGrid ( n, n )
+        |> CellGrid.WebGL.meshFromCellGrid ( ds, ds ) redMap
 
 
 redMap : Float -> Vec3
@@ -40,8 +41,13 @@ redMap t =
     vec3 (1.0 * t) 0 0
 
 
-colorAtMatrixIndex : ( Int, Int ) -> ( Int, Int ) -> Vec3
-colorAtMatrixIndex ( rows, cols ) ( i, j ) =
+testGrid : ( Int, Int ) -> CellGrid Float
+testGrid ( nRows, nCols ) =
+    CellGrid.WebGL.makeCellGrid ( nRows, nCols ) (temperatureAtIndex ( nRows, nCols ))
+
+
+temperatureAtIndex : ( Int, Int ) -> ( Int, Int ) -> Float
+temperatureAtIndex ( rows, cols ) ( i, j ) =
     let
         iRatio =
             toFloat i / toFloat rows
@@ -53,9 +59,9 @@ colorAtMatrixIndex ( rows, cols ) ( i, j ) =
             3.1416
 
         s1 =
-            sin (2.7 * pi * iRatio)
+            sin (8.7 * pi * iRatio)
 
         s2 =
             sin (4.1 * pi * jRatio)
     in
-    vec3 (0.5 + 0.3 * s1) 0.0 (0.5 + 0.5 * s2)
+    0.5 + 0.5 * s1 * s2
