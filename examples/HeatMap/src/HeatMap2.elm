@@ -43,7 +43,7 @@ redMap t =
 
 testGrid : ( Int, Int ) -> CellGrid Float
 testGrid ( nRows, nCols ) =
-    CellGrid.WebGL.makeCellGrid ( nRows, nCols ) (temperatureAtIndex ( nRows, nCols ))
+    CellGrid.makeCellGrid ( nRows, nCols ) (temperatureAtIndex ( nRows, nCols ))
 
 
 temperatureAtIndex : ( Int, Int ) -> ( Int, Int ) -> Float

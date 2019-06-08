@@ -1,8 +1,7 @@
 module CellGrid exposing
     ( CellGrid(..), CellType(..)
     , fromList, empty
-    , map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue
-    , matrixIndex, matrixIndices
+    , map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue, matrixIndex, matrixIndices, makeCellGrid
     )
 
 {-| The CellGrid package provides a type for representing
@@ -12,17 +11,17 @@ transformed, and rendered as either SVG or HTML.
 
 ## Types
 
-@docs CellGrid, CellType, CellRenderer, Msg
+@docs CellGrid, CellType
 
 
 ## Constructing and rendering CellGrids
 
-@docs fromList, empty, renderAsHtml, renderAsSvg
+@docs fromList, empty
 
 
 ## Work with cells
 
-@docs map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue
+@docs map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue, matrixIndex, matrixIndices, makeCellGrid
 
 -}
 
@@ -222,3 +221,17 @@ matrixIndices (CellGrid ( nRows, nCols ) _) =
             nRows * nCols
     in
     List.map (matrixIndex ( nRows, nCols )) (List.range 0 (n - 1))
+
+
+{-| Make a CellGrid Float using a temperatureMap. The latter
+assigns a Float to an integer tuple (row, col)
+-}
+makeCellGrid : ( Int, Int ) -> (( Int, Int ) -> Float) -> CellGrid Float
+makeCellGrid ( nRows, nCols ) temperatureMap =
+    let
+        n =
+            nRows * nCols
+    in
+    List.map (matrixIndex ( nRows, nCols )) (List.range 0 (n - 1))
+        |> List.map (\( i, j ) -> temperatureMap ( i, j ))
+        |> (\list -> CellGrid ( nRows, nCols ) (Array.fromList list))

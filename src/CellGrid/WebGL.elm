@@ -1,4 +1,27 @@
-module CellGrid.WebGL exposing (Colorizer, Vertex, makeCellGrid, meshFromCellGrid, meshWithColorizer, rectangleAtIndex, rectangleFromElement, temperatureArray, temperatureAtIndex, toHtml)
+module CellGrid.WebGL exposing
+    ( Colorizer, Vertex
+    , toHtml
+    , meshFromCellGrid, meshWithColorizer
+    )
+
+{-| The CellGrid.WebGL package provides functions for rendereing CellGrid to WebGL
+
+
+## Types
+
+@docs Colorizer, Vertex
+
+
+## Rendering functions
+
+@docs toHtml
+
+
+## Work with cells
+
+@docs meshFromCellGrid, meshWithColorizer
+
+-}
 
 import Array
 import CellGrid exposing (CellGrid(..), matrixIndex)
@@ -10,6 +33,9 @@ import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import WebGL exposing (Mesh, Shader)
 
 
+{-| Render a WebGL "drawing" to a given rectangle on the screen.
+-}
+toHtml : Int -> Int -> WebGL.Mesh Vertex -> Html.Html msg
 toHtml width_ height_ mesh =
     WebGL.toHtml
         [ width width_
@@ -24,6 +50,8 @@ toHtml width_ height_ mesh =
         ]
 
 
+{-| The type of vertices of triangles: define position and color.
+-}
 type alias Vertex =
     { position : Vec3
     , color : Vec3
@@ -34,10 +62,17 @@ type alias Uniforms =
     { perspective : Mat4 }
 
 
+{-| The type of a function which assigns a color to a cell, the
+latter given by its row and column indices
+-}
 type alias Colorizer =
     ( Int, Int ) -> Vec3
 
 
+{-| Crreate a rows x cols Vertex Mesh representing an array of rectanagles of
+size (dw, dh). The vertex colors (uniform over a rectangular cell) are determined by
+the colorizer functionion which has type (Int, Int) -> Vec3
+-}
 meshWithColorizer : Colorizer -> ( Int, Int ) -> ( Float, Float ) -> Mesh Vertex
 meshWithColorizer colorizer ( rows, cols ) ( dw, dh ) =
     let
@@ -62,17 +97,9 @@ temperatureArray (CellGrid ( rows, cols ) array) =
         |> Array.toList
 
 
-makeCellGrid : ( Int, Int ) -> (( Int, Int ) -> Float) -> CellGrid Float
-makeCellGrid ( nRows, nCols ) temperatureMap =
-    let
-        n =
-            nRows * nCols
-    in
-    List.map (matrixIndex ( nRows, nCols )) (List.range 0 (n - 1))
-        |> List.map (\( i, j ) -> temperatureMap ( i, j ))
-        |> (\list -> CellGrid ( nRows, nCols ) (Array.fromList list))
-
-
+{-| Create a mesh from a cell grid using a temperatureMap. The latter
+assigns to a temperature a triple of RGB values.
+-}
 meshFromCellGrid : ( Float, Float ) -> (Float -> Vec3) -> CellGrid Float -> Mesh Vertex
 meshFromCellGrid ( dw, dh ) temperatureMap cellGrid =
     let
@@ -176,50 +203,3 @@ fragmentShader =
         }
 
     |]
-
-
-
-{- For testing vvvvvv -}
-
-
-temperatureAtIndex : ( Int, Int ) -> ( Int, Int ) -> Float
-temperatureAtIndex ( rows, cols ) ( i, j ) =
-    let
-        iRatio =
-            toFloat i / toFloat rows
-
-        jRatio =
-            toFloat j / toFloat cols
-
-        pi =
-            3.1416
-
-        s1 =
-            sin (8.7 * pi * iRatio)
-
-        s2 =
-            sin (4.1 * pi * jRatio)
-    in
-    -- 0.5 + (0.25 * s1) + (0.25 * s2)
-    0.5 + 0.5 * s1 * s2
-
-
-colorAtMatrixIndex : ( Int, Int ) -> ( Int, Int ) -> Vec3
-colorAtMatrixIndex ( rows, cols ) ( i, j ) =
-    let
-        iRatio =
-            toFloat i / toFloat rows
-
-        jRatio =
-            toFloat j / toFloat cols
-
-        pi =
-            3.1416
-
-        s1 =
-            sin (2.7 * pi * iRatio)
-
-        s2 =
-            sin (4.1 * pi * jRatio)
-    in
-    vec3 (0.5 + 0.3 * s1) 0.0 (0.5 + 0.5 * s2)

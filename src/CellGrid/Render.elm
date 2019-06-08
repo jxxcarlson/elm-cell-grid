@@ -1,26 +1,10 @@
-module CellGrid.Render exposing
-    ( CellRenderer, Msg(..)
-    , renderAsHtml, renderAsSvg
-    )
+module CellGrid.Render exposing (Msg(..), renderAsHtml, renderAsSvg, CellRenderer)
 
 {-| The CellGrid package provides a type for representing
 a rectangular grid of cells. CellGrids can be created,
 transformed, and rendered as either SVG or HTML.
 
-
-## Types
-
-@docs CellGrid, CellType, CellRenderer, Msg
-
-
-## Constructing and rendering CellGrids
-
-@docs fromList, empty, renderAsHtml, renderAsSvg
-
-
-## Work with cells
-
-@docs map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue
+@docs Msg, renderAsHtml, renderAsSvg, CellRenderer
 
 -}
 
