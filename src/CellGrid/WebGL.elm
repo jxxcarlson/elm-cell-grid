@@ -1,20 +1,13 @@
-module HeatMap exposing (main)
-
-{-
-   Rotating triangle, that is a "hello world" of the WebGL
--}
+module CellGrid.WebGL exposing (Colorizer, Vertex, makeCellGrid, meshFromCellGrid, meshWithColorizer, rectangleAtIndex, rectangleFromElement, temperatureArray, temperatureAtIndex, toHtml)
 
 import Array
-import Browser
-import Browser.Events exposing (onAnimationFrameDelta)
 import CellGrid exposing (CellGrid(..), matrixIndex)
-import CellGrid.WebGL exposing (Colorizer, Vertex, meshWithColorizer, temperatureArray)
 import Html exposing (Html)
 import Html.Attributes exposing (height, style, width)
 import Json.Decode exposing (Value)
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
-import WebGL exposing (Mesh)
+import WebGL exposing (Mesh, Shader)
 
 
 gridSize : Int
@@ -22,35 +15,56 @@ gridSize =
     100
 
 
-main : Program Value Float Float
-main =
-    Browser.element
-        { init = \_ -> ( 0, Cmd.none )
-        , view = view
-        , subscriptions = \_ -> onAnimationFrameDelta Basics.identity
-        , update = \elapsed currentTime -> ( elapsed + currentTime, Cmd.none )
-        }
+toHtml mesh =
+    WebGL.toHtml
+        [ width 400
+        , height 400
+        , style "display" "block"
+        ]
+        [ WebGL.entity
+            vertexShader
+            fragmentShader
+            mesh
+            { perspective = Mat4.identity }
+        ]
 
 
-view : Float -> Html msg
-view t =
-    CellGrid.WebGL.toHtml (testMesh 100 0.03)
+type alias Vertex =
+    { position : Vec3
+    , color : Vec3
+    }
 
 
-testMesh : Int -> Float -> Mesh Vertex
-testMesh n ds =
-    meshWithColorizer (colorAtMatrixIndex ( n, n )) ( n, n ) ( ds, ds )
+type alias Uniforms =
+    { perspective : Mat4 }
 
 
-testMesh2 : Int -> Float -> Mesh Vertex
-testMesh2 n ds =
-    testGrid ( n, n )
-        |> meshFromCellGrid ( ds, ds ) redMap
+type alias Colorizer =
+    ( Int, Int ) -> Vec3
 
 
-redMap : Float -> Vec3
-redMap t =
-    vec3 (1.0 * t) 0 0
+meshWithColorizer : Colorizer -> ( Int, Int ) -> ( Float, Float ) -> Mesh Vertex
+meshWithColorizer colorizer ( rows, cols ) ( dw, dh ) =
+    let
+        rect : ( Int, Int ) -> List ( Vertex, Vertex, Vertex )
+        rect =
+            rectangleAtIndex colorizer ( dw, dh )
+    in
+    List.range 0 (gridSize * gridSize - 1)
+        |> List.map (matrixIndex ( gridSize, gridSize ))
+        |> List.map rect
+        |> List.concat
+        |> WebGL.triangles
+
+
+temperatureArray : CellGrid Float -> List ( ( Int, Int ), Float )
+temperatureArray (CellGrid ( rows, cols ) array) =
+    let
+        idx =
+            matrixIndex ( rows, cols )
+    in
+    Array.indexedMap (\k v -> ( idx k, v )) array
+        |> Array.toList
 
 
 makeCellGrid : ( Int, Int ) -> (( Int, Int ) -> Float) -> CellGrid Float
@@ -62,11 +76,6 @@ makeCellGrid ( nRows, nCols ) temperatureMap =
     List.map (matrixIndex ( nRows, nCols )) (List.range 0 (n - 1))
         |> List.map (\( i, j ) -> temperatureMap ( i, j ))
         |> (\list -> CellGrid ( nRows, nCols ) (Array.fromList list))
-
-
-testGrid : ( Int, Int ) -> CellGrid Float
-testGrid ( nRows, nCols ) =
-    makeCellGrid ( nRows, nCols ) (temperatureAtIndex ( nRows, nCols ))
 
 
 meshFromCellGrid : ( Float, Float ) -> (Float -> Vec3) -> CellGrid Float -> Mesh Vertex
@@ -141,6 +150,41 @@ rectangleFromElement temperatureMap ( dw, dh ) ( ( i_, j_ ), t ) =
       , Vertex (vec3 x (y - dh) 0) color_
       )
     ]
+
+
+vertexShader : Shader Vertex Uniforms { vcolor : Vec3 }
+vertexShader =
+    [glsl|
+
+        attribute vec3 position;
+        attribute vec3 color;
+        uniform mat4 perspective;
+        varying vec3 vcolor;
+
+        void main () {
+            gl_Position = perspective * vec4(position, 1.0);
+            vcolor = color;
+        }
+
+    |]
+
+
+fragmentShader : Shader {} Uniforms { vcolor : Vec3 }
+fragmentShader =
+    [glsl|
+
+        precision mediump float;
+        varying vec3 vcolor;
+
+        void main () {
+            gl_FragColor = vec4(vcolor, 1.0);
+        }
+
+    |]
+
+
+
+{- For testing vvvvvv -}
 
 
 temperatureAtIndex : ( Int, Int ) -> ( Int, Int ) -> Float
