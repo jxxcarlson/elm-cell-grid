@@ -4,6 +4,7 @@ module HeatMap exposing (main)
    Rotating triangle, that is a "hello world" of the WebGL
 -}
 
+import Array
 import Browser
 import Browser.Events exposing (onAnimationFrameDelta)
 import CellGrid exposing (CellGrid(..), matrixIndex)
@@ -74,17 +75,40 @@ view t =
 
 testMesh : Int -> Float -> Mesh Vertex
 testMesh n ds =
-    mesh (colorAtMatrixIndex ( n, n )) ( n, n ) ( ds, ds )
+    meshWithColorizer (colorAtMatrixIndex ( n, n )) ( n, n ) ( ds, ds )
 
 
-mesh : Colorizer -> ( Int, Int ) -> ( Float, Float ) -> Mesh Vertex
-mesh colorizer ( rows, cols ) ( dw, dh ) =
+meshWithColorizer : Colorizer -> ( Int, Int ) -> ( Float, Float ) -> Mesh Vertex
+meshWithColorizer colorizer ( rows, cols ) ( dw, dh ) =
     let
+        rect : ( Int, Int ) -> List ( Vertex, Vertex, Vertex )
         rect =
             rectangleAtIndex colorizer ( dw, dh )
     in
     List.range 0 (gridSize * gridSize - 1)
         |> List.map (matrixIndex ( gridSize, gridSize ))
+        |> List.map rect
+        |> List.concat
+        |> WebGL.triangles
+
+
+temperatureArray : CellGrid Float -> List ( ( Int, Int ), Float )
+temperatureArray (CellGrid ( rows, cols ) array) =
+    let
+        idx =
+            matrixIndex ( rows, cols )
+    in
+    Array.indexedMap (\k v -> ( idx k, v )) array
+        |> Array.toList
+
+
+meshFromCellGrid : CellGrid Float -> ( Float, Float ) -> (Float -> Vec3) -> Mesh Vertex
+meshFromCellGrid cellGrid ( dw, dh ) temperatureMap =
+    let
+        rect =
+            rectangleFromElement temperatureMap ( dw, dh )
+    in
+    temperatureArray cellGrid
         |> List.map rect
         |> List.concat
         |> WebGL.triangles
@@ -107,6 +131,39 @@ rectangleAtIndex colorizer ( dw, dh ) ( i_, j_ ) =
 
         color_ =
             colorizer ( i_, j_ )
+    in
+    [ ( Vertex (vec3 x y 0) color_
+      , Vertex (vec3 (x + dw) y 0) color_
+      , Vertex (vec3 x (y - dh) 0) color_
+      )
+    , ( Vertex (vec3 (x + dw) y 0) color_
+      , Vertex (vec3 (x + dw) (y - dh) 0) color_
+      , Vertex (vec3 x (y - dh) 0) color_
+      )
+    ]
+
+
+rectangleFromElement :
+    (Float -> Vec3)
+    -> ( Float, Float )
+    -> ( ( Int, Int ), Float )
+    -> List ( Vertex, Vertex, Vertex )
+rectangleFromElement temperatureMap ( dw, dh ) ( ( i_, j_ ), t ) =
+    let
+        i =
+            toFloat i_
+
+        j =
+            toFloat j_
+
+        x =
+            -1.0 + i * dw
+
+        y =
+            1.0 - j * dh
+
+        color_ =
+            temperatureMap t
     in
     [ ( Vertex (vec3 x y 0) color_
       , Vertex (vec3 (x + dw) y 0) color_
