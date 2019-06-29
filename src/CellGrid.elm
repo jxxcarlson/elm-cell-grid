@@ -2,6 +2,7 @@ module CellGrid exposing
     ( CellGrid(..), CellType(..)
     , fromList, empty
     , map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue, matrixIndex, matrixIndices, makeCellGrid
+    , adjacent, neighbors, nextIndex
     )
 
 {-| The CellGrid package provides a type for representing
@@ -81,7 +82,7 @@ fromList nRows nColumns data =
     CellGrid (2,2) (Array.fromList [2,4,6,8])
 
 -}
-map : (a -> a) -> CellGrid a -> CellGrid a
+map : (a -> b) -> CellGrid a -> CellGrid b
 map f (CellGrid ( nRows, nCols ) cells) =
     CellGrid ( nRows, nCols ) (Array.map f cells)
 
@@ -97,7 +98,7 @@ foldl reducer initialValue (CellGrid ( _, _ ) cells) =
 Used when the transformed value depends on its matrixIndex as well
 as its value
 -}
-mapWithIndex : (( Int, Int ) -> a -> a) -> CellGrid a -> CellGrid a
+mapWithIndex : (( Int, Int ) -> a -> b) -> CellGrid a -> CellGrid b
 mapWithIndex cellTransformer (CellGrid ( nRows, nCols ) cells) =
     let
         indexedCellTransformer =
@@ -111,9 +112,51 @@ mapWithIndex cellTransformer (CellGrid ( nRows, nCols ) cells) =
     (Int, Int) -> CellGrid a -> a)
 
 -}
-transform : (( Int, Int ) -> CellGrid a -> a) -> CellGrid a -> CellGrid a
-transform newCellValue grid =
-    List.foldl (\( i, j ) acc -> setValue acc ( i, j ) (newCellValue ( i, j ) grid)) grid (matrixIndices grid)
+transform : (( Int, Int ) -> CellGrid a -> b) -> CellGrid a -> CellGrid b
+transform newCellValue ((CellGrid ( w, h ) elements) as grid) =
+    let
+        folder element ( ( i, j ), acc ) =
+            ( nextIndex ( w, h ) ( i, j ), Array.push (newCellValue ( i, j ) grid) acc )
+    in
+    Array.foldl folder ( ( 0, 0 ), Array.empty ) elements
+        |> Tuple.second
+        |> CellGrid ( w, h )
+
+
+nextIndex ( w, h ) ( i, j ) =
+    if j < w - 1 then
+        ( i, j + 1 )
+
+    else
+        ( i + 1, 0 )
+
+
+{-| Give list of neighgoring cells
+-}
+neighbors : ( Int, Int ) -> CellGrid a -> List a
+neighbors ( x, y ) grid =
+    List.filterMap (\index_ -> cellAtMatrixIndex index_ grid)
+        [ ( x - 1, y - 1 )
+        , ( x, y - 1 )
+        , ( x + 1, y - 1 )
+        , ( x - 1, y )
+        , ( x + 1, y )
+        , ( x - 1, y + 1 )
+        , ( x, y + 1 )
+        , ( x + 1, y + 1 )
+        ]
+
+
+{-| Give list of adjacent
+-}
+adjacent : ( Int, Int ) -> CellGrid a -> List a
+adjacent ( x, y ) grid =
+    List.filterMap (\index_ -> cellAtMatrixIndex index_ grid)
+        [ ( x, y - 1 )
+        , ( x - 1, y )
+        , ( x + 1, y )
+        , ( x, y + 1 )
+        ]
 
 
 rows : CellGrid a -> Int

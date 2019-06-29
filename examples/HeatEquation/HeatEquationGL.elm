@@ -22,7 +22,7 @@ import Time exposing (Posix)
 
 tickInterval : Float
 tickInterval =
-    333
+    10 0
 
 
 initialSeed =
