@@ -2,7 +2,7 @@ module CellGrid exposing
     ( CellGrid(..), CellType(..)
     , fromList, empty
     , map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue, matrixIndex, matrixIndices, makeCellGrid
-    , adjacent, neighbors, nextIndex
+    , adjacent, neighbors
     )
 
 {-| The CellGrid package provides a type for representing
@@ -23,6 +23,8 @@ transformed, and rendered as either SVG or HTML.
 ## Work with cells
 
 @docs map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue, matrixIndex, matrixIndices, makeCellGrid
+
+@docs adjacent, neighbors
 
 -}
 
