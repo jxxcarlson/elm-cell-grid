@@ -223,8 +223,8 @@ setValue (CellGrid ( nRows, nCols ) values) ( i, j ) value =
 {-| return the type of the cell at location (i,j). Thus
 classifyCell grid (0,0) = Corner
 -}
-classifyCell : CellGrid a -> ( Int, Int ) -> CellType
-classifyCell cellGrid ( i, j ) =
+classifyCell : ( Int, Int ) -> CellGrid a -> CellType
+classifyCell ( i, j ) cellGrid =
     let
         ( nRows, nCols ) =
             dimensions cellGrid
