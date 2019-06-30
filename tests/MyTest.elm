@@ -107,7 +107,7 @@ suite =
                             CellGrid.fromList 4 4 (List.range 0 15)
                                 |> Maybe.withDefault CellGrid.empty
                     in
-                    Expect.equal (CellGrid.classifyCell ( 0, 0 ) cg) Corner
+                    Expect.equal (CellGrid.classifyCell cg ( 0, 0 )) Corner
             , test "classifyCell: Edge" <|
                 \_ ->
                     let
@@ -115,7 +115,7 @@ suite =
                             CellGrid.fromList 4 4 (List.range 0 15)
                                 |> Maybe.withDefault CellGrid.empty
                     in
-                    Expect.equal (CellGrid.classifyCell ( 2, 0 ) cg) Edge
+                    Expect.equal (CellGrid.classifyCell cg ( 2, 0 )) Edge
             , test "classifyCell: Interior" <|
                 \_ ->
                     let
@@ -123,7 +123,7 @@ suite =
                             CellGrid.fromList 4 4 (List.range 0 15)
                                 |> Maybe.withDefault CellGrid.empty
                     in
-                    Expect.equal (CellGrid.classifyCell ( 2, 2 ) cg) Interior
+                    Expect.equal (CellGrid.classifyCell cg ( 2, 2 )) Interior
             , test "matrixIndex" <|
                 \_ ->
                     let

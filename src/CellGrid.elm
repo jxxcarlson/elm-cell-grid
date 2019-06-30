@@ -224,8 +224,8 @@ setValue (CellGrid ( nRows, nCols ) values) ( i, j ) value =
 {-| return the type of the cell at location (i,j). Thus
 classifyCell grid (0,0) = Corner
 -}
-classifyCell : ( Int, Int ) -> CellGrid a -> CellType
-classifyCell ( i, j ) cellGrid =
+classifyCell : CellGrid a -> ( Int, Int ) -> CellType
+classifyCell cellGrid ( i, j ) =
     let
         ( nRows, nCols ) =
             dimensions cellGrid
@@ -279,6 +279,5 @@ makeCellGrid ( nRows, nCols ) temperatureMap =
             nRows * nCols
     in
     List.map (matrixIndex ( nRows, nCols )) (List.range 0 (n - 1))
-        |> Debug.log "MI"
         |> List.map (\( i, j ) -> temperatureMap ( i, j ))
         |> (\list -> CellGrid ( nRows, nCols ) (Array.fromList list))
