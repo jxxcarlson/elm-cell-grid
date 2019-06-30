@@ -104,7 +104,7 @@ suite =
                 \_ ->
                     let
                         cg =
-                            CellGrid.fromList 4 4 (List.range 0 8)
+                            CellGrid.fromList 4 4 (List.range 0 15)
                                 |> Maybe.withDefault CellGrid.empty
                     in
                     Expect.equal (CellGrid.classifyCell ( 0, 0 ) cg) Corner
@@ -112,7 +112,7 @@ suite =
                 \_ ->
                     let
                         cg =
-                            CellGrid.fromList 4 4 (List.range 0 8)
+                            CellGrid.fromList 4 4 (List.range 0 15)
                                 |> Maybe.withDefault CellGrid.empty
                     in
                     Expect.equal (CellGrid.classifyCell ( 2, 0 ) cg) Edge
@@ -120,10 +120,101 @@ suite =
                 \_ ->
                     let
                         cg =
-                            CellGrid.fromList 4 4 (List.range 0 8)
+                            CellGrid.fromList 4 4 (List.range 0 15)
                                 |> Maybe.withDefault CellGrid.empty
                     in
                     Expect.equal (CellGrid.classifyCell ( 2, 2 ) cg) Interior
+            , test "matrixIndex" <|
+                \_ ->
+                    let
+                        indices =
+                            List.map (CellGrid.matrixIndex ( 2, 3 )) (List.range 0 5)
+
+                        indices2 =
+                            [ ( 0, 0 ), ( 0, 1 ), ( 0, 2 ), ( 1, 0 ), ( 1, 1 ), ( 1, 2 ) ]
+                    in
+                    Expect.equal indices indices2
+            , test "cellAtMatrixIndex" <|
+                \_ ->
+                    let
+                        cg =
+                            CellGrid.fromList 2 3 (List.range 0 5)
+                                |> Maybe.withDefault CellGrid.empty
+
+                        value0 =
+                            CellGrid.cellAtMatrixIndex ( 0, 2 ) cg
+
+                        value1 =
+                            CellGrid.cellAtMatrixIndex ( 1, 0 ) cg
+
+                        value2 =
+                            CellGrid.cellAtMatrixIndex ( 1, 2 ) cg
+                    in
+                    Expect.equal [ value0, value1, value2 ] [ Just 2, Just 3, Just 5 ]
+            , test "cellAtMatrixIndex II" <|
+                \_ ->
+                    let
+                        cg =
+                            CellGrid.fromList 2 3 (List.range 0 5)
+                                |> Maybe.withDefault CellGrid.empty
+
+                        indices =
+                            [ ( 0, 0 ), ( 0, 1 ), ( 0, 2 ), ( 1, 0 ), ( 1, 1 ), ( 1, 2 ) ]
+
+                        values =
+                            List.map (\( i, j ) -> CellGrid.cellAtMatrixIndex ( i, j ) cg) indices
+                    in
+                    Expect.equal values (List.range 0 5 |> List.map Just)
+            , test "matrixIndices" <|
+                \_ ->
+                    let
+                        cg =
+                            CellGrid.fromList 2 3 (List.range 0 5)
+                                |> Maybe.withDefault CellGrid.empty
+
+                        indices1 =
+                            CellGrid.matrixIndices cg
+
+                        indices2 =
+                            [ ( 0, 0 ), ( 0, 1 ), ( 0, 2 ), ( 1, 0 ), ( 1, 1 ), ( 1, 2 ) ]
+                    in
+                    Expect.equal indices1 indices2
+            , test "makeCellGrid" <|
+                \_ ->
+                    let
+                        cg =
+                            Debug.log "CG" <|
+                                CellGrid.makeCellGrid ( 2, 3 ) (\( i, j ) -> toFloat (i + j))
+
+                        temperature =
+                            Debug.log "T" <|
+                                (CellGrid.cellAtMatrixIndex ( 1, 2 ) cg
+                                    |> Maybe.withDefault -1
+                                )
+                    in
+                    Expect.equal temperature 3.0
+            , test "adjacent" <|
+                \_ ->
+                    let
+                        cg =
+                            CellGrid.fromList 4 4 (List.range 0 15)
+                                |> Maybe.withDefault CellGrid.empty
+
+                        expectedAdjacent =
+                            [ 6, 1, 4, 9 ]
+                    in
+                    Expect.equal (CellGrid.adjacent ( 1, 1 ) cg) expectedAdjacent
+            , test "neighbors" <|
+                \_ ->
+                    let
+                        cg =
+                            CellGrid.fromList 4 4 (List.range 0 15)
+                                |> Maybe.withDefault CellGrid.empty
+
+                        expectedNeighbors =
+                            [ 6, 2, 1, 0, 4, 8, 9, 10 ]
+                    in
+                    Expect.equal (CellGrid.neighbors ( 1, 1 ) cg) expectedNeighbors
             ]
         ]
 

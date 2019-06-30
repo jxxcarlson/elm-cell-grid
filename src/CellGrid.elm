@@ -3,6 +3,7 @@ module CellGrid exposing
     , fromList, empty
     , map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue, matrixIndex, matrixIndices, makeCellGrid
     , adjacent, neighbors
+    , index
     )
 
 {-| The CellGrid package provides a type for representing
@@ -133,31 +134,31 @@ nextIndex ( w, h ) ( i, j ) =
         ( i + 1, 0 )
 
 
-{-| Give list of neighgoring cells
+{-| Give list of the call values at the eight neighgoring cells
 -}
 neighbors : ( Int, Int ) -> CellGrid a -> List a
 neighbors ( x, y ) grid =
     List.filterMap (\index_ -> cellAtMatrixIndex index_ grid)
-        [ ( x - 1, y - 1 )
+        [ ( x, y + 1 )
+        , ( x - 1, y + 1 )
+        , ( x - 1, y )
+        , ( x - 1, y - 1 )
         , ( x, y - 1 )
         , ( x + 1, y - 1 )
-        , ( x - 1, y )
         , ( x + 1, y )
-        , ( x - 1, y + 1 )
-        , ( x, y + 1 )
         , ( x + 1, y + 1 )
         ]
 
 
-{-| Give list of adjacent
+{-| Give list of the cellValues at the four adjacent
 -}
 adjacent : ( Int, Int ) -> CellGrid a -> List a
 adjacent ( x, y ) grid =
     List.filterMap (\index_ -> cellAtMatrixIndex index_ grid)
-        [ ( x, y - 1 )
+        [ ( x, y + 1 )
         , ( x - 1, y )
+        , ( x, y - 1 )
         , ( x + 1, y )
-        , ( x, y + 1 )
         ]
 
 
@@ -182,8 +183,8 @@ is the index in the 1D array of the corresponding
 element in the 2D array at location (i,j)\`
 -}
 index : Int -> ( Int, Int ) -> Int
-index nRows ( row, col ) =
-    nRows * row + col
+index nCols ( row, col ) =
+    nCols * row + col
 
 
 {-| Conversely, `(nRows, nCols) k` is the
@@ -191,7 +192,7 @@ index nRows ( row, col ) =
 -}
 matrixIndex : ( Int, Int ) -> Int -> ( Int, Int )
 matrixIndex ( nRows, nCols ) n =
-    ( n // nCols, modBy nRows n )
+    ( n // nCols, modBy nCols n )
 
 
 {-| Return the Maybe value of the cell at (i,j) from grid
@@ -203,10 +204,10 @@ matrixIndex ( nRows, nCols ) n =
 cellAtMatrixIndex : ( Int, Int ) -> CellGrid a -> Maybe a
 cellAtMatrixIndex ( i, j ) grid =
     let
-        (CellGrid ( nRows, _ ) array) =
+        (CellGrid ( _, nCols ) array) =
             grid
     in
-    Array.get (index nRows ( i, j )) array
+    Array.get (index nCols ( i, j )) array
 
 
 {-| Set the value of the cell at location (i,j)
@@ -278,5 +279,6 @@ makeCellGrid ( nRows, nCols ) temperatureMap =
             nRows * nCols
     in
     List.map (matrixIndex ( nRows, nCols )) (List.range 0 (n - 1))
+        |> Debug.log "MI"
         |> List.map (\( i, j ) -> temperatureMap ( i, j ))
         |> (\list -> CellGrid ( nRows, nCols ) (Array.fromList list))
