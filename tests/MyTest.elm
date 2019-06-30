@@ -8,6 +8,10 @@ import Fuzz exposing (Fuzzer, int, list, string)
 import Test exposing (..)
 
 
+
+-- import TypedSvg.Types exposing (..)
+
+
 suite : Test
 suite =
     describe "The CellGrid module"
@@ -96,14 +100,30 @@ suite =
                             CellGrid.transform transformer cg
                     in
                     Expect.equal (CellGrid.cellAtMatrixIndex ( 1, 1 ) cg2) (Just 6)
-            , test "classifyCell" <|
+            , test "classifyCell: Corner" <|
                 \_ ->
                     let
                         cg =
-                            CellGrid.fromList 3 3 (List.range 0 8)
+                            CellGrid.fromList 4 4 (List.range 0 8)
                                 |> Maybe.withDefault CellGrid.empty
                     in
                     Expect.equal (CellGrid.classifyCell ( 0, 0 ) cg) Corner
+            , test "classifyCell: Edge" <|
+                \_ ->
+                    let
+                        cg =
+                            CellGrid.fromList 4 4 (List.range 0 8)
+                                |> Maybe.withDefault CellGrid.empty
+                    in
+                    Expect.equal (CellGrid.classifyCell ( 2, 0 ) cg) Edge
+            , test "classifyCell: Interior" <|
+                \_ ->
+                    let
+                        cg =
+                            CellGrid.fromList 4 4 (List.range 0 8)
+                                |> Maybe.withDefault CellGrid.empty
+                    in
+                    Expect.equal (CellGrid.classifyCell ( 2, 2 ) cg) Interior
             ]
         ]
 
