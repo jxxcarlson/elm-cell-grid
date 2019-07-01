@@ -1,10 +1,10 @@
-module CellGrid.WebGL exposing
+module CellGrid.RenderWebGL exposing
     ( Colorizer, Vertex
-    , cellGridToHtml, meshToHtml
+    , asHtml, meshToHtml
     , meshFromCellGrid, meshWithColorizer
     )
 
-{-| The CellGrid.WebGL package provides functions for rendereing CellGrid to WebGL
+{-| The CellGrid.RenderWebGL package provides functions for rendereing CellGrid to WebGL
 
 
 ## Types
@@ -14,7 +14,7 @@ module CellGrid.WebGL exposing
 
 ## Rendering functions
 
-@docs cellGridToHtml, meshToHtml
+@docs asHtml, meshToHtml
 
 
 ## Work with cells
@@ -72,8 +72,8 @@ meshToHtml width_ height_ mesh =
 {-| Render a CellGrid to a width\_ x height\_ rectangle on the screen using
 a function temperatureMap which transforms scalars to color vectors
 -}
-cellGridToHtml : Int -> Int -> CellGrid Float -> (Float -> Vec3) -> Html.Html msg
-cellGridToHtml width_ height_ cellGrid temperatureMap =
+asHtml : Int -> Int -> CellGrid Float -> (Float -> Vec3) -> Html.Html msg
+asHtml width_ height_ cellGrid temperatureMap =
     let
         (CellGrid ( nRows, nCols ) array) =
             cellGrid
@@ -103,7 +103,7 @@ cellGridToHtml width_ height_ cellGrid temperatureMap =
 -- testMesh : Int -> Float -> Mesh Vertex
 -- testMesh n ds =
 --     testGrid ( n, n )
---         |> CellGrid.WebGL.meshFromCellGrid ( ds, ds ) redMap
+--         |> CellGrid.RenderWebGL.meshFromCellGrid ( ds, ds ) redMap
 
 
 {-| Crreate a rows x cols Vertex Mesh representing an array of rectanagles of

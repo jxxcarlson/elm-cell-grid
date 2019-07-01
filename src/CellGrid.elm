@@ -3,7 +3,6 @@ module CellGrid exposing
     , fromList, empty
     , map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue, matrixIndex, matrixIndices, makeCellGrid
     , adjacent, neighbors
-    , index
     )
 
 {-| The CellGrid package provides a type for representing

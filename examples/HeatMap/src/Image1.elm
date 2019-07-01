@@ -1,13 +1,9 @@
-module HeatMap2 exposing (main)
-
-{-
-   Rotating triangle, that is a "hello world" of the WebGL
--}
+module Image1 exposing (main)
 
 import Browser
 import Browser.Events exposing (onAnimationFrameDelta)
 import CellGrid exposing (CellGrid(..), matrixIndex)
-import CellGrid.WebGL exposing (Colorizer, Vertex)
+import CellGrid.RenderWebGL exposing (Colorizer, Vertex)
 import Html exposing (Html)
 import Html.Attributes exposing (height, style, width)
 import Json.Decode exposing (Value)
@@ -27,27 +23,21 @@ main =
 
 view : Float -> Html msg
 view t =
-    CellGrid.WebGL.cellGridToHtml 700 700 (testGrid ( 200, 200 )) colorMap
+    CellGrid.RenderWebGL.meshToHtml 700 700 (testMesh 200 0.04)
 
 
 testMesh : Int -> Float -> Mesh Vertex
 testMesh n ds =
-    testGrid ( n, n )
-        |> CellGrid.WebGL.meshFromCellGrid ( ds, ds ) colorMap
+    CellGrid.RenderWebGL.meshWithColorizer (colorAtMatrixIndex ( n, n )) ( n, n ) ( ds, ds )
 
 
-colorMap : Float -> Vec3
-colorMap t =
-    vec3 t 0 0
+redMap : Float -> Vec3
+redMap t =
+    vec3 (1.0 * t) 0 0
 
 
-testGrid : ( Int, Int ) -> CellGrid Float
-testGrid ( nRows, nCols ) =
-    CellGrid.makeCellGrid ( nRows, nCols ) (temperatureAtIndex ( nRows, nCols ))
-
-
-temperatureAtIndex : ( Int, Int ) -> ( Int, Int ) -> Float
-temperatureAtIndex ( rows, cols ) ( i, j ) =
+colorAtMatrixIndex : ( Int, Int ) -> ( Int, Int ) -> Vec3
+colorAtMatrixIndex ( rows, cols ) ( i, j ) =
     let
         iRatio =
             toFloat i / toFloat rows
@@ -59,9 +49,9 @@ temperatureAtIndex ( rows, cols ) ( i, j ) =
             3.1416
 
         s1 =
-            sin (8.7 * pi * iRatio)
+            sin (2.7 * pi * iRatio)
 
         s2 =
             sin (4.1 * pi * jRatio)
     in
-    0.5 + 0.5 * s1 * s2
+    vec3 (0.5 + 0.3 * s1) 0.0 (0.5 + 0.5 * s2)

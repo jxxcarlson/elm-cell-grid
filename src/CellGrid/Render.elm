@@ -1,10 +1,10 @@
-module CellGrid.Render exposing (Msg(..), renderAsHtml, renderAsSvg, CellRenderer)
+module CellGrid.Render exposing (Msg(..), asHtml, asSvg, CellRenderer)
 
 {-| The CellGrid package provides a type for representing
 a rectangular grid of cells. CellGrids can be created,
 transformed, and rendered as either SVG or HTML.
 
-@docs Msg, renderAsHtml, renderAsSvg, CellRenderer
+@docs Msg, asHtml, asSvg, CellRenderer
 
 -}
 
@@ -46,20 +46,20 @@ type Msg
 {-| Render a cell grid as Html. The first two parameters
 are the width and height of the rendered grid in pixels.
 -}
-renderAsHtml : Float -> Float -> CellRenderer a -> CellGrid a -> Html Msg
-renderAsHtml width_ height_ cr cellGrid =
+asHtml : Float -> Float -> CellRenderer a -> CellGrid a -> Html Msg
+asHtml width_ height_ cr cellGrid =
     svg
         [ height height_
         , width width_
         , viewBox 0 0 width_ height_
         ]
-        [ renderAsSvg cr cellGrid ]
+        [ asSvg cr cellGrid ]
 
 
 {-| Render a cell grid as SVG
 -}
-renderAsSvg : CellRenderer a -> CellGrid a -> Svg Msg
-renderAsSvg cr cellGrid =
+asSvg : CellRenderer a -> CellGrid a -> Svg Msg
+asSvg cr cellGrid =
     matrixIndices cellGrid
         |> List.map (renderCell cr cellGrid)
         |> g []

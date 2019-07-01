@@ -8,7 +8,7 @@ module HeatEquationGL exposing (main)
 
 import Browser
 import CellGrid exposing (CellGrid(..))
-import CellGrid.WebGL
+import CellGrid.RenderWebGL
 import Color exposing (Color)
 import Element exposing (..)
 import Element.Background as Background
@@ -22,7 +22,7 @@ import Time exposing (Posix)
 
 tickInterval : Float
 tickInterval =
-    10 0
+    10
 
 
 initialSeed =
@@ -182,7 +182,7 @@ mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
             [ title "Diffusion of Heat"
-            , el [] (CellGrid.WebGL.cellGridToHtml 500 500 model.heatMap colorMap |> Element.html)
+            , el [] (CellGrid.RenderWebGL.asHtml 500 500 model.heatMap colorMap |> Element.html)
             , row [ spacing 18 ]
                 [ resetButton
                 , runButton model

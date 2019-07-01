@@ -204,7 +204,7 @@ mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
             [ title "Diffusion of Heat"
-            , el [] (CellGrid.Render.renderAsHtml 400 400 cellrenderer model.heatMap |> Element.html |> Element.map CellGrid)
+            , el [] (CellGrid.Render.asHtml 400 400 cellrenderer model.heatMap |> Element.html |> Element.map CellGrid)
             , row [ spacing 18 ]
                 [ resetButton
                 , runButton model

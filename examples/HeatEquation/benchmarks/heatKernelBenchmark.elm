@@ -50,10 +50,10 @@ suite =
           --   ]
           -- describe "render (SVG)"
           --   [ benchmark "temperature field" <|
-          --       \_ -> CellGrid.Render.renderAsHtml 400 400 cellrenderer tf
+          --       \_ -> CellGrid.Render.asHtml 400 400 cellrenderer tf
           --   ]
           describe "render (WebGL)"
             [ benchmark "temperature field" <|
-                \_ -> CellGrid.WebGL.cellGridToHtml 500 500 tf colorMap
+                \_ -> CellGrid.WebGL.asHtml 500 500 tf colorMap
             ]
         ]

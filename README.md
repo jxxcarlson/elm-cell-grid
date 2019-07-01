@@ -1,33 +1,45 @@
 # CellGrid
 
 The CellGrid package provides a type for representing and rendering
-a rectangular grid of cells.  The grid can respond
-to mouse clicks, and there are three rendering options: HTML, SVG,
-and WebGL.  Here is what a cellGrid structure looks like:
+a rectangular grid of cells.  The grid can be rendered as
+HTML, SVG, or WebGL.  In the HTML and SVG versions, the grid responds to
+mouse clicks.  Here is the type definition:
 
 ```
 type CellGrid a
     = CellGrid ( Int, Int ) (Array a)
 ```
 
+Thus
+
+```
+cg = CellGrid (2,3) (Array Int)
+```
+
+sets up a CellGrid with two rows and three columns, with each
+cell carrying an integer payload.
+
 There are two on-line demo applications: [Conway's game of life](https://jxxcarlson.github.io/app/gameoflife2.html), and [a simulation
 of heat conduction](https://jxxcarlson.github.io/app/heat-model.html).  See the `examples` folder on [GitHub](https://github.com/jxxcarlson/elm-cell-grid)
 for the code. In the first example, we use the type
-`CellGrid State`, where
+
+```
+CellGrid State,
+```
+where
 
 ```
 type State = Occupied | Unoccupied
 ```
 
-In the second, we use `CellGrid Float`.  The idea is the
-cell contents (the floating point number) represents
-the temperature of the cell.
+In the second, we use
 
-One can create a CellGrid, transform it, and render it both SVG
-and HTML, as in the figure below (taken from the simulation in
-examples/HeatEquation)
-
-Note the type
+```
+CellGrid Float
+```
+In this case, the contents of a cell represents
+its temperature. One can create a CellGrid, transform it, and render as SVG
+HTML, or WebGL.  Note the type
 
 ```
 type Msg = MouseClick (Int, Int) (Float, Float)
@@ -37,8 +49,8 @@ It is referenced by the function which renders a cell
 so that when the user clicks on a cell, a message
 is sent containing the matrix index *(i,j)* of the cell
 in question as well as its local floating
-point coordinates *(x,y)*.  In `./examples/GameOfLife.elm`,
-see the files `Main.elm` to see how this message is used.
+point coordinates *(x,y)*.  Consult `./examples/GameOfLife.elm`,
+to see how this message is used to respond to user clicks.
 
 
 ![((HTML rendition of CellGrids))](heat.jpg)
@@ -78,7 +90,7 @@ Just 4 : Maybe Float
 Render a `CellGrid` using the function
 
 ```
-renderAsHtml : Int -> Int ->  CellRenderer a
+asHtml : Int -> Int ->  CellRenderer a
                -> CellGrid a -> Html msg
 ```
 
@@ -138,7 +150,7 @@ Please consult `./examples/HeatMap2.elm`.
 One uses
 
 ```
-CellGrid.WebGL.cellGridToHtml 700 700
+CellGrid.WebGL.asHtml 700 700
    (testGrid ( 200, 200 )) colorMap
 ```
 

@@ -246,7 +246,7 @@ mainColumn model =
         [ column [ centerX, spacing 20 ]
             [ title "Conway's Game of Life"
             , el [ centerX ]
-                (CellGrid.Render.renderAsHtml gridDisplayWidth gridDisplayWidth cellrenderer model.cellMap
+                (CellGrid.Render.asHtml gridDisplayWidth gridDisplayWidth cellrenderer model.cellMap
                     |> Element.html
                     |> Element.map CellGrid
                 )
