@@ -1,7 +1,6 @@
 module MyTest exposing (suite)
 
 import CellGrid exposing (CellGrid, CellType(..), matrixIndices, setValue)
-import CellGrid.WebGL
 import Color
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
@@ -179,12 +178,12 @@ suite =
                             [ ( 0, 0 ), ( 0, 1 ), ( 0, 2 ), ( 1, 0 ), ( 1, 1 ), ( 1, 2 ) ]
                     in
                     Expect.equal indices1 indices2
-            , test "makeCellGrid" <|
+            , test "initialize" <|
                 \_ ->
                     let
                         cg =
                             Debug.log "CG" <|
-                                CellGrid.makeCellGrid ( 2, 3 ) (\( i, j ) -> toFloat (i + j))
+                                CellGrid.initialize ( 2, 3 ) (\( i, j ) -> toFloat (i + j))
 
                         temperature =
                             Debug.log "T" <|
@@ -193,6 +192,24 @@ suite =
                                 )
                     in
                     Expect.equal temperature 3.0
+            , test "initialize full" <|
+                \_ ->
+                    let
+                        cg =
+                            CellGrid.initialize ( 2, 3 ) (\( i, j ) -> toFloat (i + j))
+                    in
+                    cg
+                        |> Just
+                        |> Expect.equal (CellGrid.fromList 2 3 [ 0, 1, 2, 1, 2, 3 ])
+            , test "repeat" <|
+                \_ ->
+                    let
+                        cg =
+                            CellGrid.repeat ( 2, 3 ) 42
+                    in
+                    cg
+                        |> Just
+                        |> Expect.equal (CellGrid.fromList 2 3 (List.repeat (2 * 3) 42))
             , test "adjacent" <|
                 \_ ->
                     let
