@@ -10,20 +10,25 @@ import Json.Decode exposing (Value)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import WebGL exposing (Mesh)
 
+userScale = 0.5
 
 main : Program Value Float Float
 main =
     Browser.element
         { init = \_ -> ( 0, Cmd.none )
-        , view = view
+        , view = view userScale
         , subscriptions = \_ -> onAnimationFrameDelta Basics.identity
         , update = \elapsed currentTime -> ( elapsed + currentTime, Cmd.none )
         }
 
 
-view : Float -> Html msg
-view t =
-    CellGrid.RenderWebGL.asHtml 700 700 (testGrid ( 200, 200 )) colorMap
+view : Float -> Float -> Html msg
+view scale t =
+    let
+        w = round(scale*700)
+        g = round(200*scale)
+    in
+    CellGrid.RenderWebGL.asHtml w w (testGrid ( g, g )) colorMap
 
 
 testMesh : Int -> Float -> Mesh Vertex

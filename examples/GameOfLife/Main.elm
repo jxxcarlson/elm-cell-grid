@@ -244,7 +244,7 @@ mainColumn : Model -> Element Msg
 mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
-            [ title "Conway's Game of Life"
+            [ title <| "Conway's Game of Life (" ++ String.fromInt gridWidth ++ ", " ++ String.fromInt gridWidth ++ ")"
             , el [ centerX ]
                 (CellGrid.Render.asHtml gridDisplayWidth gridDisplayWidth cellrenderer model.cellMap
                     |> Element.html

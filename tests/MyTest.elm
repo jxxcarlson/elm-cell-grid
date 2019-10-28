@@ -1,7 +1,7 @@
 module MyTest exposing (suite)
 
 import CellGrid exposing (CellGrid, CellType(..), matrixIndices, setValue)
-import CellGrid.WebGL
+import CellGrid.RenderWebGL
 import Color
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
