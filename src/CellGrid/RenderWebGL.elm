@@ -31,11 +31,10 @@ module CellGrid.RenderWebGL exposing
 
 import Array
 import CellGrid exposing (CellGrid(..), matrixIndex)
-import Html exposing (Html)
+import Html
 import Html.Attributes exposing (height, style, width)
-import Json.Decode exposing (Value)
 import Math.Matrix4 as Mat4 exposing (Mat4)
-import Math.Vector3 as Vec3 exposing (Vec3, vec3)
+import Math.Vector3 exposing (Vec3)
 import WebGL exposing (Mesh, Shader)
 
 
@@ -83,7 +82,7 @@ a function temperatureMap which transforms scalars to color vectors
 asHtml : Int -> Int -> CellGrid Float -> (Float -> Vec3) -> Html.Html msg
 asHtml width_ height_ cellGrid temperatureMap =
     let
-        (CellGrid ( nRows, nCols ) array) =
+        (CellGrid ( nRows, nCols ) _) =
             cellGrid
 
         dw =
@@ -105,13 +104,6 @@ asHtml width_ height_ cellGrid temperatureMap =
             (meshFromCellGrid ( dw, dh ) temperatureMap cellGrid)
             { perspective = Mat4.identity }
         ]
-
-
-
--- testMesh : Int -> Float -> Mesh Vertex
--- testMesh n ds =
---     testGrid ( n, n )
---         |> CellGrid.RenderWebGL.meshFromCellGrid ( ds, ds ) redMap
 
 
 meshWithColorizer : Colorizer -> ( Int, Int ) -> ( Float, Float ) -> Mesh Vertex
@@ -162,35 +154,6 @@ meshFromCellGridHelp ( dw, dh ) temperatureMap (CellGrid ( rows, cols ) array) =
         |> Tuple.second
 
 
-rectangleAtIndex : Colorizer -> ( Float, Float ) -> ( Int, Int ) -> List ( Vertex, Vertex, Vertex )
-rectangleAtIndex colorizer ( dw, dh ) ( i_, j_ ) =
-    let
-        i =
-            toFloat i_
-
-        j =
-            toFloat j_
-
-        x =
-            -1.0 + i * dw
-
-        y =
-            1.0 - j * dh
-
-        color_ =
-            colorizer ( i_, j_ )
-    in
-    [ ( Vertex x y 0 color_
-      , Vertex (x + dw) y 0 color_
-      , Vertex x (y - dh) 0 color_
-      )
-    , ( Vertex (x + dw) y 0 color_
-      , Vertex (x + dw) (y - dh) 0 color_
-      , Vertex x (y - dh) 0 color_
-      )
-    ]
-
-
 addRectangleAtIndex : Colorizer -> ( Float, Float ) -> ( Int, Int ) -> List ( Vertex, Vertex, Vertex ) -> List ( Vertex, Vertex, Vertex )
 addRectangleAtIndex colorizer ( dw, dh ) ( i_, j_ ) accum =
     let
@@ -222,39 +185,6 @@ addRectangleAtIndex colorizer ( dw, dh ) ( i_, j_ ) accum =
             )
     in
     v1 :: v2 :: accum
-
-
-rectangleFromElement :
-    (Float -> Vec3)
-    -> ( Float, Float )
-    -> ( ( Int, Int ), Float )
-    -> List ( Vertex, Vertex, Vertex )
-rectangleFromElement temperatureMap ( dw, dh ) ( ( i_, j_ ), t ) =
-    let
-        i =
-            toFloat i_
-
-        j =
-            toFloat j_
-
-        x =
-            -1.0 + i * dw
-
-        y =
-            1.0 - j * dh
-
-        color_ =
-            temperatureMap t
-    in
-    [ ( Vertex x y 0 color_
-      , Vertex (x + dw) y 0 color_
-      , Vertex x (y - dh) 0 color_
-      )
-    , ( Vertex (x + dw) y 0 color_
-      , Vertex (x + dw) (y - dh) 0 color_
-      , Vertex x (y - dh) 0 color_
-      )
-    ]
 
 
 addRectangleFromElement :
