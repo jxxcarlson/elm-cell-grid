@@ -1,7 +1,7 @@
 module CellGrid exposing
     ( CellGrid(..), CellType(..)
-    , fromList, empty
-    , map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue, matrixIndex, matrixIndices, makeCellGrid
+    , empty, initialize, repeat, fromList
+    , map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue, matrixIndex, matrixIndices
     , adjacent, neighbors
     )
 
@@ -17,12 +17,12 @@ transformed, and rendered as either SVG or HTML.
 
 ## Constructing and rendering CellGrids
 
-@docs fromList, empty
+@docs empty, initialize, repeat, fromList
 
 
 ## Work with cells
 
-@docs map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue, matrixIndex, matrixIndices, makeCellGrid
+@docs map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue, matrixIndex, matrixIndices
 
 @docs adjacent, neighbors
 
@@ -256,27 +256,83 @@ classifyCell cellGrid ( i, j ) =
                 Edge
 
 
-{-| Return a list of all matrix indices (i,j) of a grid.
-Useful for mapping.
+{-| Return a list of all matrix indices (i,j) of a grid. Useful for mapping.
+
+    grid : CellGrid
+    grid =
+        CellGrid.fromList 2 3 (List.range 0 5)
+            |> Maybe.withDefault CellGrid.empty
+
+    CellGrid.matrixIndices grid
+        --> [ ( 0, 0 ), ( 0, 1 ), ( 0, 2 ), ( 1, 0 ), ( 1, 1 ), ( 1, 2 ) ]
+
 -}
 matrixIndices : CellGrid a -> List ( Int, Int )
 matrixIndices (CellGrid ( nRows, nCols ) _) =
     let
-        n =
-            nRows * nCols
+        -- because `List` is used, we must move from the bottom right corner to the top-left
+        -- so intuitively everything is reversed.
+        maxRow =
+            nRows - 1
+
+        maxColumn =
+            nCols - 1
+
+        go row column accum =
+            if row < 0 then
+                -- row is outside of range: stop
+                accum
+
+            else if column == 0 then
+                -- last column of the row: decrement row, reset column
+                go (row - 1) maxColumn (( row, column ) :: accum)
+
+            else
+                -- somewhere in the interior: decrement column
+                go row (column - 1) (( row, column ) :: accum)
     in
-    List.map (matrixIndex ( nRows, nCols )) (List.range 0 (n - 1))
+    go maxRow maxColumn []
 
 
-{-| Make a CellGrid Float using a temperatureMap. The latter
-assigns a Float to an integer tuple (row, col)
+{-| Initialize a cell grid. `initialize (row, column) f` creates a
+cell grid of size `(row, column)` with the element at `(i, j)` set to the result of `f (i, j)`.
+
+    CellGrid.initialize (2,2) Tuple.first
+        --> CellGrid.fromList [ 0, 0, 1, 1 ]
+
+    CellGrid.initalize ( 2, 3 ) (\( i, j ) -> toFloat (i + j))
+        --> CellGrid.fromList 2 3 [ 0, 1, 2, 1, 2, 3 ]
+
 -}
-makeCellGrid : ( Int, Int ) -> (( Int, Int ) -> Float) -> CellGrid Float
-makeCellGrid ( nRows, nCols ) temperatureMap =
+initialize : ( Int, Int ) -> (( Int, Int ) -> a) -> CellGrid a
+initialize ( nRows, nCols ) temperatureMap =
+    let
+        maxRow =
+            nRows - 1
+
+        maxColumn =
+            nCols - 1
+
+        go row column accum =
+            if row > maxRow then
+                -- row is outside of range: stop
+                accum
+
+            else if column == maxColumn then
+                -- last column of the row: increment row, reset column
+                go (row + 1) 0 (Array.push (temperatureMap ( row, column )) accum)
+
+            else
+                -- somewhere in the interior: increment column
+                go row (column + 1) (Array.push (temperatureMap ( row, column )) accum)
+    in
+    CellGrid ( nRows, nCols ) (go 0 0 Array.empty)
+
+
+repeat : ( Int, Int ) -> a -> CellGrid a
+repeat ( nRows, nCols ) value =
     let
         n =
             nRows * nCols
     in
-    List.map (matrixIndex ( nRows, nCols )) (List.range 0 (n - 1))
-        |> List.map (\( i, j ) -> temperatureMap ( i, j ))
-        |> (\list -> CellGrid ( nRows, nCols ) (Array.fromList list))
+    CellGrid ( nRows, nCols ) (Array.repeat n value)
