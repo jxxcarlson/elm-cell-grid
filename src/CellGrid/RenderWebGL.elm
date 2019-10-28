@@ -31,6 +31,7 @@ module CellGrid.RenderWebGL exposing
 
 import Array
 import CellGrid exposing (CellGrid(..), matrixIndex)
+import Color exposing (Color)
 import Html
 import Html.Attributes exposing (height, style, width)
 import Math.Matrix4 as Mat4 exposing (Mat4)
@@ -44,7 +45,9 @@ type alias Vertex =
     { x : Float
     , y : Float
     , z : Float
-    , color : Vec3
+    , r : Float
+    , g : Float
+    , b : Float
     }
 
 
@@ -56,7 +59,7 @@ type alias Uniforms =
 latter given by its row and column indices
 -}
 type alias Colorizer =
-    ( Int, Int ) -> Vec3
+    ( Int, Int ) -> Color
 
 
 {-| Render a WebGL "drawing" to a given rectangle on the screen.
@@ -79,7 +82,7 @@ meshToHtml width_ height_ mesh =
 {-| Render a CellGrid to a width\_ x height\_ rectangle on the screen using
 a function temperatureMap which transforms scalars to color vectors
 -}
-asHtml : Int -> Int -> CellGrid Float -> (Float -> Vec3) -> Html.Html msg
+asHtml : Int -> Int -> CellGrid a -> (a -> Color) -> Html.Html msg
 asHtml width_ height_ cellGrid temperatureMap =
     let
         (CellGrid ( nRows, nCols ) _) =
@@ -106,6 +109,10 @@ asHtml width_ height_ cellGrid temperatureMap =
         ]
 
 
+{-| Create a rows x cols Vertex Mesh representing an array of rectanagles of
+size (dw, dh). The vertex colors (uniform over a rectangular cell) are determined by
+the colorizer functionion which has type (Int, Int) -> Vec3
+-}
 meshWithColorizer : Colorizer -> ( Int, Int ) -> ( Float, Float ) -> Mesh Vertex
 meshWithColorizer colorizer position size =
     meshWithColorizerHelp colorizer position size
@@ -132,7 +139,7 @@ meshWithColorizerHelp colorizer ( rows, cols ) ( dw, dh ) =
 {-| Create a mesh from a cell grid using a temperatureMap. The latter
 assigns to a temperature a triple of RGB values.
 -}
-meshFromCellGrid : ( Float, Float ) -> (Float -> Vec3) -> CellGrid Float -> Mesh Vertex
+meshFromCellGrid : ( Float, Float ) -> (a -> Color) -> CellGrid a -> Mesh Vertex
 meshFromCellGrid size temperatureMap cellGrid =
     meshFromCellGridHelp size temperatureMap cellGrid
         |> WebGL.triangles
@@ -141,10 +148,10 @@ meshFromCellGrid size temperatureMap cellGrid =
 {-| Create a mesh from a cell grid using a temperatureMap. The latter
 assigns to a temperature a triple of RGB values.
 -}
-meshFromCellGridHelp : ( Float, Float ) -> (Float -> Vec3) -> CellGrid Float -> List ( Vertex, Vertex, Vertex )
+meshFromCellGridHelp : ( Float, Float ) -> (a -> Color) -> CellGrid a -> List ( Vertex, Vertex, Vertex )
 meshFromCellGridHelp ( dw, dh ) temperatureMap (CellGrid ( rows, cols ) array) =
     let
-        folder : Float -> ( Int, List ( Vertex, Vertex, Vertex ) ) -> ( Int, List ( Vertex, Vertex, Vertex ) )
+        folder : a -> ( Int, List ( Vertex, Vertex, Vertex ) ) -> ( Int, List ( Vertex, Vertex, Vertex ) )
         folder value ( index, accum ) =
             ( index - 1
             , addRectangleFromElement temperatureMap ( dw, dh ) ( matrixIndex ( rows, cols ) index, value ) accum
@@ -169,28 +176,28 @@ addRectangleAtIndex colorizer ( dw, dh ) ( i_, j_ ) accum =
         y =
             1.0 - j * dh
 
-        color_ =
-            colorizer ( i_, j_ )
+        color =
+            Color.toRgba (colorizer ( i_, j_ ))
 
         v1 =
-            ( Vertex x y 0 color_
-            , Vertex (x + dw) y 0 color_
-            , Vertex x (y - dh) 0 color_
+            ( Vertex x y 0 color.red color.green color.blue
+            , Vertex (x + dw) y 0 color.red color.green color.blue
+            , Vertex x (y - dh) 0 color.red color.green color.blue
             )
 
         v2 =
-            ( Vertex (x + dw) y 0 color_
-            , Vertex (x + dw) (y - dh) 0 color_
-            , Vertex x (y - dh) 0 color_
+            ( Vertex (x + dw) y 0 color.red color.green color.blue
+            , Vertex (x + dw) (y - dh) 0 color.red color.green color.blue
+            , Vertex x (y - dh) 0 color.red color.green color.blue
             )
     in
     v1 :: v2 :: accum
 
 
 addRectangleFromElement :
-    (Float -> Vec3)
+    (a -> Color)
     -> ( Float, Float )
-    -> ( ( Int, Int ), Float )
+    -> ( ( Int, Int ), a )
     -> List ( Vertex, Vertex, Vertex )
     -> List ( Vertex, Vertex, Vertex )
 addRectangleFromElement temperatureMap ( dw, dh ) ( ( i_, j_ ), t ) accum =
@@ -207,19 +214,19 @@ addRectangleFromElement temperatureMap ( dw, dh ) ( ( i_, j_ ), t ) accum =
         y =
             1.0 - j * dh
 
-        color_ =
-            temperatureMap t
+        color =
+            Color.toRgba (temperatureMap t)
 
         v1 =
-            ( Vertex x y 0 color_
-            , Vertex (x + dw) y 0 color_
-            , Vertex x (y - dh) 0 color_
+            ( Vertex x y 0 color.red color.green color.blue
+            , Vertex (x + dw) y 0 color.red color.green color.blue
+            , Vertex x (y - dh) 0 color.red color.green color.blue
             )
 
         v2 =
-            ( Vertex (x + dw) y 0 color_
-            , Vertex (x + dw) (y - dh) 0 color_
-            , Vertex x (y - dh) 0 color_
+            ( Vertex (x + dw) y 0 color.red color.green color.blue
+            , Vertex (x + dw) (y - dh) 0 color.red color.green color.blue
+            , Vertex x (y - dh) 0 color.red color.green color.blue
             )
     in
     v1 :: v2 :: accum
@@ -232,13 +239,15 @@ vertexShader =
         attribute float x;
         attribute float y;
         attribute float z;
-        attribute vec3 color;
+        attribute float r;
+        attribute float g;
+        attribute float b;
         uniform mat4 perspective;
         varying vec3 vcolor;
 
         void main () {
             gl_Position = perspective * vec4(x, y, z, 1.0);
-            vcolor = color;
+            vcolor = vec3(r,g,b);
         }
 
     |]
