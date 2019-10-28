@@ -36,7 +36,9 @@ import WebGL exposing (Mesh, Shader)
 {-| The type of vertices of triangles: define position and color.
 -}
 type alias Vertex =
-    { position : Vec3
+    { x : Float
+    , y : Float
+    , z : Float
     , color : Vec3
     }
 
@@ -167,13 +169,13 @@ rectangleAtIndex colorizer ( dw, dh ) ( i_, j_ ) =
         color_ =
             colorizer ( i_, j_ )
     in
-    [ ( Vertex (vec3 x y 0) color_
-      , Vertex (vec3 (x + dw) y 0) color_
-      , Vertex (vec3 x (y - dh) 0) color_
+    [ ( Vertex x y 0 color_
+      , Vertex (x + dw) y 0 color_
+      , Vertex x (y - dh) 0 color_
       )
-    , ( Vertex (vec3 (x + dw) y 0) color_
-      , Vertex (vec3 (x + dw) (y - dh) 0) color_
-      , Vertex (vec3 x (y - dh) 0) color_
+    , ( Vertex (x + dw) y 0 color_
+      , Vertex (x + dw) (y - dh) 0 color_
+      , Vertex x (y - dh) 0 color_
       )
     ]
 
@@ -200,13 +202,13 @@ rectangleFromElement temperatureMap ( dw, dh ) ( ( i_, j_ ), t ) =
         color_ =
             temperatureMap t
     in
-    [ ( Vertex (vec3 x y 0) color_
-      , Vertex (vec3 (x + dw) y 0) color_
-      , Vertex (vec3 x (y - dh) 0) color_
+    [ ( Vertex x y 0 color_
+      , Vertex (x + dw) y 0 color_
+      , Vertex x (y - dh) 0 color_
       )
-    , ( Vertex (vec3 (x + dw) y 0) color_
-      , Vertex (vec3 (x + dw) (y - dh) 0) color_
-      , Vertex (vec3 x (y - dh) 0) color_
+    , ( Vertex (x + dw) y 0 color_
+      , Vertex (x + dw) (y - dh) 0 color_
+      , Vertex x (y - dh) 0 color_
       )
     ]
 
@@ -215,13 +217,15 @@ vertexShader : Shader Vertex Uniforms { vcolor : Vec3 }
 vertexShader =
     [glsl|
 
-        attribute vec3 position;
+        attribute float x;
+        attribute float y;
+        attribute float z;
         attribute vec3 color;
         uniform mat4 perspective;
         varying vec3 vcolor;
 
         void main () {
-            gl_Position = perspective * vec4(position, 1.0);
+            gl_Position = perspective * vec4(x, y, z, 1.0);
             vcolor = color;
         }
 
