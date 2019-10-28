@@ -33,7 +33,7 @@ import Array
 import CellGrid exposing (CellGrid(..), matrixIndex)
 import Color exposing (Color)
 import Html
-import Html.Attributes exposing (height, style, width)
+import Html.Attributes
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector3 exposing (Vec3)
 import WebGL exposing (Mesh, Shader)
@@ -65,11 +65,11 @@ type alias Colorizer =
 {-| Render a WebGL "drawing" to a given rectangle on the screen.
 -}
 meshToHtml : Int -> Int -> WebGL.Mesh Vertex -> Html.Html msg
-meshToHtml width_ height_ mesh =
+meshToHtml width height mesh =
     WebGL.toHtml
-        [ width width_
-        , height height_
-        , style "display" "block"
+        [ Html.Attributes.width width
+        , Html.Attributes.height height
+        , Html.Attributes.style "display" "block"
         ]
         [ WebGL.entity
             vertexShader
@@ -83,23 +83,23 @@ meshToHtml width_ height_ mesh =
 a function temperatureMap which transforms scalars to color vectors
 -}
 asHtml : Int -> Int -> CellGrid a -> (a -> Color) -> Html.Html msg
-asHtml width_ height_ cellGrid temperatureMap =
+asHtml width height cellGrid temperatureMap =
     let
         (CellGrid ( nRows, nCols ) _) =
             cellGrid
 
         dw =
-            toFloat width_
+            toFloat width
                 / toFloat (250 * nRows)
 
         dh =
-            toFloat height_
+            toFloat height
                 / toFloat (250 * nCols)
     in
     WebGL.toHtml
-        [ width width_
-        , height height_
-        , style "display" "block"
+        [ Html.Attributes.width width
+        , Html.Attributes.height height
+        , Html.Attributes.style "display" "block"
         ]
         [ WebGL.entity
             vertexShader
