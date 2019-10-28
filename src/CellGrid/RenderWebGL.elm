@@ -2,7 +2,7 @@ module CellGrid.RenderWebGL exposing
     ( Colorizer, Vertex
     , asHtml, meshToHtml
     , meshFromCellGrid, meshWithColorizer
-    , meshWithColorizerHelp
+    , meshWithColorizerHelp, meshFromCellGridHelp
     )
 
 {-| The CellGrid.RenderWebGL package provides functions for rendereing CellGrid to WebGL
@@ -25,7 +25,7 @@ module CellGrid.RenderWebGL exposing
 
 ## Lowlevel
 
-@docs meshWithColorizerHelp
+@docs meshWithColorizerHelp, meshFromCellGridHelp
 
 -}
 
@@ -129,38 +129,37 @@ meshWithColorizerHelp colorizer ( rows, cols ) ( dw, dh ) =
     let
         go i accum =
             if i >= 0 then
-                go (i - 1) (accum ++ (List.reverse <| rectangleAtIndex colorizer ( dw, dh ) (matrixIndex ( rows, cols ) i)))
+                go (i - 1) (addRectangleAtIndex colorizer ( dw, dh ) (matrixIndex ( rows, cols ) i) accum)
 
             else
                 accum
     in
     go (rows * cols - 1) []
-        |> List.reverse
-
-
-temperatureArray : CellGrid Float -> List ( ( Int, Int ), Float )
-temperatureArray (CellGrid ( rows, cols ) array) =
-    let
-        idx =
-            matrixIndex ( rows, cols )
-    in
-    Array.indexedMap (\k v -> ( idx k, v )) array
-        |> Array.toList
 
 
 {-| Create a mesh from a cell grid using a temperatureMap. The latter
 assigns to a temperature a triple of RGB values.
 -}
 meshFromCellGrid : ( Float, Float ) -> (Float -> Vec3) -> CellGrid Float -> Mesh Vertex
-meshFromCellGrid ( dw, dh ) temperatureMap cellGrid =
-    let
-        rect =
-            rectangleFromElement temperatureMap ( dw, dh )
-    in
-    temperatureArray cellGrid
-        |> List.map rect
-        |> List.concat
+meshFromCellGrid size temperatureMap cellGrid =
+    meshFromCellGridHelp size temperatureMap cellGrid
         |> WebGL.triangles
+
+
+{-| Create a mesh from a cell grid using a temperatureMap. The latter
+assigns to a temperature a triple of RGB values.
+-}
+meshFromCellGridHelp : ( Float, Float ) -> (Float -> Vec3) -> CellGrid Float -> List ( Vertex, Vertex, Vertex )
+meshFromCellGridHelp ( dw, dh ) temperatureMap (CellGrid ( rows, cols ) array) =
+    let
+        folder : Float -> ( Int, List ( Vertex, Vertex, Vertex ) ) -> ( Int, List ( Vertex, Vertex, Vertex ) )
+        folder value ( index, accum ) =
+            ( index - 1
+            , addRectangleFromElement temperatureMap ( dw, dh ) ( matrixIndex ( rows, cols ) index, value ) accum
+            )
+    in
+    Array.foldr folder ( Array.length array - 1, [] ) array
+        |> Tuple.second
 
 
 rectangleAtIndex : Colorizer -> ( Float, Float ) -> ( Int, Int ) -> List ( Vertex, Vertex, Vertex )
@@ -190,6 +189,39 @@ rectangleAtIndex colorizer ( dw, dh ) ( i_, j_ ) =
       , Vertex x (y - dh) 0 color_
       )
     ]
+
+
+addRectangleAtIndex : Colorizer -> ( Float, Float ) -> ( Int, Int ) -> List ( Vertex, Vertex, Vertex ) -> List ( Vertex, Vertex, Vertex )
+addRectangleAtIndex colorizer ( dw, dh ) ( i_, j_ ) accum =
+    let
+        i =
+            toFloat i_
+
+        j =
+            toFloat j_
+
+        x =
+            -1.0 + i * dw
+
+        y =
+            1.0 - j * dh
+
+        color_ =
+            colorizer ( i_, j_ )
+
+        v1 =
+            ( Vertex x y 0 color_
+            , Vertex (x + dw) y 0 color_
+            , Vertex x (y - dh) 0 color_
+            )
+
+        v2 =
+            ( Vertex (x + dw) y 0 color_
+            , Vertex (x + dw) (y - dh) 0 color_
+            , Vertex x (y - dh) 0 color_
+            )
+    in
+    v1 :: v2 :: accum
 
 
 rectangleFromElement :
@@ -223,6 +255,44 @@ rectangleFromElement temperatureMap ( dw, dh ) ( ( i_, j_ ), t ) =
       , Vertex x (y - dh) 0 color_
       )
     ]
+
+
+addRectangleFromElement :
+    (Float -> Vec3)
+    -> ( Float, Float )
+    -> ( ( Int, Int ), Float )
+    -> List ( Vertex, Vertex, Vertex )
+    -> List ( Vertex, Vertex, Vertex )
+addRectangleFromElement temperatureMap ( dw, dh ) ( ( i_, j_ ), t ) accum =
+    let
+        i =
+            toFloat i_
+
+        j =
+            toFloat j_
+
+        x =
+            -1.0 + i * dw
+
+        y =
+            1.0 - j * dh
+
+        color_ =
+            temperatureMap t
+
+        v1 =
+            ( Vertex x y 0 color_
+            , Vertex (x + dw) y 0 color_
+            , Vertex x (y - dh) 0 color_
+            )
+
+        v2 =
+            ( Vertex (x + dw) y 0 color_
+            , Vertex (x + dw) (y - dh) 0 color_
+            , Vertex x (y - dh) 0 color_
+            )
+    in
+    v1 :: v2 :: accum
 
 
 vertexShader : Shader Vertex Uniforms { vcolor : Vec3 }
