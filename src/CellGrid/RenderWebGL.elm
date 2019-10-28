@@ -2,6 +2,7 @@ module CellGrid.RenderWebGL exposing
     ( Colorizer, Vertex
     , asHtml, meshToHtml
     , meshFromCellGrid, meshWithColorizer
+    , meshWithColorizerHelp
     )
 
 {-| The CellGrid.RenderWebGL package provides functions for rendereing CellGrid to WebGL
@@ -20,6 +21,11 @@ module CellGrid.RenderWebGL exposing
 ## Work with cells
 
 @docs meshFromCellGrid, meshWithColorizer
+
+
+## Lowlevel
+
+@docs meshWithColorizerHelp
 
 -}
 
@@ -108,22 +114,28 @@ asHtml width_ height_ cellGrid temperatureMap =
 --         |> CellGrid.RenderWebGL.meshFromCellGrid ( ds, ds ) redMap
 
 
+meshWithColorizer : Colorizer -> ( Int, Int ) -> ( Float, Float ) -> Mesh Vertex
+meshWithColorizer colorizer position size =
+    meshWithColorizerHelp colorizer position size
+        |> WebGL.triangles
+
+
 {-| Crreate a rows x cols Vertex Mesh representing an array of rectanagles of
 size (dw, dh). The vertex colors (uniform over a rectangular cell) are determined by
 the colorizer functionion which has type (Int, Int) -> Vec3
 -}
-meshWithColorizer : Colorizer -> ( Int, Int ) -> ( Float, Float ) -> Mesh Vertex
-meshWithColorizer colorizer ( rows, cols ) ( dw, dh ) =
+meshWithColorizerHelp : Colorizer -> ( Int, Int ) -> ( Float, Float ) -> List ( Vertex, Vertex, Vertex )
+meshWithColorizerHelp colorizer ( rows, cols ) ( dw, dh ) =
     let
-        rect : ( Int, Int ) -> List ( Vertex, Vertex, Vertex )
-        rect =
-            rectangleAtIndex colorizer ( dw, dh )
+        go i accum =
+            if i >= 0 then
+                go (i - 1) (accum ++ (List.reverse <| rectangleAtIndex colorizer ( dw, dh ) (matrixIndex ( rows, cols ) i)))
+
+            else
+                accum
     in
-    List.range 0 (rows * cols - 1)
-        |> List.map (matrixIndex ( rows, cols ))
-        |> List.map rect
-        |> List.concat
-        |> WebGL.triangles
+    go (rows * cols - 1) []
+        |> List.reverse
 
 
 temperatureArray : CellGrid Float -> List ( ( Int, Int ), Float )
