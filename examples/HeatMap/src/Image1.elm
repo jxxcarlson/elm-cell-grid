@@ -23,17 +23,12 @@ main =
 
 view : Float -> Html msg
 view t =
-    CellGrid.RenderWebGL.meshToHtml 700 700 (testMesh 200 0.04)
+    CellGrid.RenderWebGL.meshToHtml 700 700 (mesh 200 0.04)
 
 
-testMesh : Int -> Float -> Mesh Vertex
-testMesh n ds =
+mesh : Int -> Float -> Mesh Vertex
+mesh n ds =
     CellGrid.RenderWebGL.meshWithColorizer (colorAtMatrixIndex ( n, n )) ( n, n ) ( ds, ds )
-
-
-redMap : Float -> Vec3
-redMap t =
-    vec3 (1.0 * t) 0 0
 
 
 colorAtMatrixIndex : ( Int, Int ) -> ( Int, Int ) -> Vec3

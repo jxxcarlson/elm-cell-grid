@@ -53,7 +53,8 @@ type alias Uniforms =
 
 
 {-| The type of a function which assigns a color to a cell, the
-latter given by its row and column indices
+latter given by its row and column indices.  A color is a
+Vec3 value, wjhich is  3-vector of RGB values.
 -}
 type alias Colorizer =
     ( Int, Int ) -> Vec3

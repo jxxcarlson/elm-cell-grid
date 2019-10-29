@@ -28,13 +28,13 @@ view scale t =
         w = round(scale*700)
         g = round(200*scale)
     in
-    CellGrid.RenderWebGL.asHtml w w (testGrid ( g, g )) colorMap
+    CellGrid.RenderWebGL.asHtml w w (grid ( g, g )) colorMap
 
-
-testMesh : Int -> Float -> Mesh Vertex
-testMesh n ds =
-    testGrid ( n, n )
-        |> CellGrid.RenderWebGL.meshFromCellGrid ( ds, ds ) colorMap
+--
+--mesh : Int -> Float -> Mesh Vertex
+--mesh n ds =
+--    grid ( n, n )
+--        |> CellGrid.RenderWebGL.meshFromCellGrid ( ds, ds ) colorMap
 
 
 colorMap : Float -> Vec3
@@ -42,8 +42,8 @@ colorMap t =
     vec3 t 0 0
 
 
-testGrid : ( Int, Int ) -> CellGrid Float
-testGrid ( nRows, nCols ) =
+grid : ( Int, Int ) -> CellGrid Float
+grid ( nRows, nCols ) =
     CellGrid.makeCellGrid ( nRows, nCols ) (temperatureAtIndex ( nRows, nCols ))
 
 
