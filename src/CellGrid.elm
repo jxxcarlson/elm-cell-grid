@@ -298,7 +298,7 @@ matrixIndices (CellGrid ( nRows, nCols ) _) =
 cell grid of size `(row, column)` with the element at `(i, j)` set to the result of `f (i, j)`.
 
     CellGrid.initialize (2,2) Tuple.first
-        --> CellGrid.fromList [ 0, 0, 1, 1 ]
+        --> CellGrid.fromList 2 2 [ 0, 0, 1, 1 ]
 
     CellGrid.initalize ( 2, 3 ) (\( i, j ) -> toFloat (i + j))
         --> CellGrid.fromList 2 3 [ 0, 1, 2, 1, 2, 3 ]
@@ -329,6 +329,12 @@ initialize ( nRows, nCols ) temperatureMap =
     CellGrid ( nRows, nCols ) (go 0 0 Array.empty)
 
 
+{-| Fill a cell grid with a constant value
+
+    CellGrid.repeat (2,2) 42
+        --> CellGrid.fromList 2 2 [ 42, 42, 42, 42 ]
+
+-}
 repeat : ( Int, Int ) -> a -> CellGrid a
 repeat ( nRows, nCols ) value =
     let
