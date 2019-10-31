@@ -1,10 +1,14 @@
-module CellGrid.Render exposing (Msg, asHtml, asSvg, CellStyle)
+module CellGrid.Render exposing
+    ( asHtml, asSvg
+    , Msg, CellStyle
+    )
 
-{-| The CellGrid package provides a type for representing
-a rectangular grid of cells. CellGrids can be created,
-transformed, and rendered as either SVG or HTML.
+{-| Render a cell grid as html using SVG
 
-@docs Msg, asHtml, asSvg, CellStyle
+SVG is slower for large cell grids, but is more interactive. User clicks on cells in the grid can be captured and used for interaction.
+
+@docs asHtml, asSvg
+@docs Msg, CellStyle
 
 -}
 
@@ -19,25 +23,35 @@ import TypedSvg.Core exposing (Svg)
 import TypedSvg.Types exposing (Fill(..))
 
 
-{-| CellStyle is a record that provides the information --
-size and color --
-that is needed to render a cell to SVG. `Color` is as
-defined in the package `avh4/elm-color`, e.g. `Color.rgb 1 0 0`,
-which is bright red.
+{-| Customize how a cell is rendered.
+`Color` is as defined in the package `avh4/elm-color`, e.g. `Color.rgb 1 0 0` is bright red.
+
+    cellStyle : CellStyle Bool
+    cellStyle =
+        { toColor =
+            \b ->
+                if b then
+                    Color.green
+
+                else
+                    Color.red
+        , cellWidth = 10
+        , cellHeight = 10
+        , gridLineWidth = 1
+        , gridLineColor = Color.black
+        }
+
 -}
 type alias CellStyle a =
     { cellWidth : Float
     , cellHeight : Float
     , toColor : a -> Color
     , gridLineWidth : Float
-    , defaultColor : Color
     , gridLineColor : Color
     }
 
 
-{-| The MouseClick message sends the matrix index (i,j)
-of the cell on which the user has clicked as well
-as the local (x,y) coordinates of the cell.
+{-| Capture clicks on the rendered cell grid. Gives the position in the cell grid, and the local `(x, y)` coordinates of the cell
 -}
 type alias Msg =
     { cell : Position
@@ -48,12 +62,11 @@ type alias Msg =
     }
 
 
-{-| Render a cell grid as Html. The first two parameters
-are the width and height of the rendered grid in pixels.
+{-| Render a cell grid into an html element of the given width and height.
 -}
 asHtml : { width : Int, height : Int } -> CellStyle a -> CellGrid a -> Html Msg
 asHtml { width, height } cr cellGrid =
-    svg
+    TypedSvg.svg
         [ TypedSvg.Attributes.InPx.height (toFloat height)
         , TypedSvg.Attributes.InPx.width (toFloat width)
         , TypedSvg.Attributes.viewBox 0 0 (toFloat width) (toFloat height)
@@ -70,21 +83,17 @@ asSvg style cellGrid =
             CellGrid.indexedMap (\i j -> renderCell style (Position i j)) cellGrid
                 |> CellGrid.foldr (::) []
     in
-    g [] elements
+    TypedSvg.g [] elements
 
 
 renderCell : CellStyle a -> Position -> a -> Svg Msg
 renderCell style position value =
-    let
-        color =
-            style.toColor value
-    in
-    rect
+    TypedSvg.rect
         [ width style.cellWidth
         , height style.cellHeight
         , x <| style.cellWidth * toFloat position.row
         , y <| style.cellHeight * toFloat position.column
-        , fill (Fill color)
+        , fill (Fill (style.toColor value))
         , Mouse.onDown
             (\r ->
                 let

@@ -11,7 +11,7 @@ module CellGrid exposing
 
 {-| The CellGrid package provides a type for representing
 a rectangular grid of cells. CellGrids can be created,
-transformed, and rendered as either SVG or HTML.
+transformed, and rendered with either SVG or WebGL.
 
 
 ## Type
