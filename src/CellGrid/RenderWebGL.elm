@@ -32,7 +32,7 @@ Internal functions exposed for testing.
 -}
 
 import Array
-import CellGrid exposing (CellGrid(..), matrixIndex)
+import CellGrid exposing (CellGrid(..), Position, matrixIndex)
 import Color exposing (Color)
 import Html
 import Html.Attributes
@@ -151,22 +151,16 @@ meshFromCellGridHelp style (CellGrid { rows, columns } array) =
 
 addRectangleFromElement :
     CellStyle a
-    -> ( ( Int, Int ), a )
+    -> ( Position, a )
     -> List ( Vertex, Vertex, Vertex )
     -> List ( Vertex, Vertex, Vertex )
-addRectangleFromElement style ( ( i_, j_ ), t ) accum =
+addRectangleFromElement style ( position, t ) accum =
     let
-        i =
-            toFloat i_
-
-        j =
-            toFloat j_
-
         x =
-            -1.0 + i * style.cellWidth
+            -1.0 + toFloat position.row * style.cellWidth
 
         y =
-            1.0 - j * style.cellHeight
+            1.0 - toFloat position.column * style.cellHeight
 
         color =
             Color.toRgba (style.toColor t)
