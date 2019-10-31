@@ -1,17 +1,13 @@
 module CellGrid.RenderWebGL exposing
-    ( Vertex
-    , asHtml
+    ( asHtml
+    , Vertex
+    , CellStyle
     , meshFromCellGrid
     , meshToHtml
     , meshFromCellGridHelp
     )
 
-{-| The CellGrid.RenderWebGL module provides functions for rendereing CellGrid to WebGL
-
-
-## Types
-
-@docs Vertex
+{-| Render a `CellGrid` using WebGL. WebGL is typically faster for a large (1000+) cell grids.
 
 
 ## Rendering functions
@@ -19,34 +15,18 @@ module CellGrid.RenderWebGL exposing
 @docs asHtml
 
 
-## Work with cells
+## LowLevel
 
+@docs Vertex
+@docs CellStyle
 @docs meshFromCellGrid
+@docs meshToHtml
 
 
-### recreating `meshWithColorizer`
-
-A previous version of this package had a `meshWithColorizer` function.
-It can be recreated using `CellGrid.initialize` and `meshFromCellGrid`:
-
-    meshWithColorizer :
-        (( Int, Int ) -> Color)
-        -> ( Int, Int )
-        ->
-            { width : Float
-            , height : Float
-            }
-        -> Mesh Vertex
-    meshWithColorizer toColor size rectangle =
-        CellGrid.initialize size toColor
-            |> CellGrid.RenderWebGL.meshFromCellGrid rectangle identity
-
-
-## Lowlevel
+## Internals
 
 Internal functions exposed for testing.
 
-@docs meshToHtml
 @docs meshFromCellGridHelp
 
 -}
@@ -60,7 +40,78 @@ import Math.Vector3 exposing (Vec3)
 import WebGL exposing (Mesh, Shader)
 
 
-{-| The type of vertices of triangles: define position and color.
+{-| Render a cell grid into an html element of the given width and height.
+
+The cells are stretched to use up all available space. For customized cell sizes, see `meshToHtml`.
+
+-}
+asHtml : { width : Int, height : Int } -> (a -> Color) -> CellGrid a -> Html.Html msg
+asHtml ({ width, height } as canvas) toColor ((CellGrid ( nRows, nCols ) _) as cellGrid) =
+    let
+        -- why 250?
+        style : CellStyle a
+        style =
+            { toColor = toColor
+            , cellWidth = toFloat width / toFloat (250 * nRows)
+            , cellHeight = toFloat height / toFloat (250 * nCols)
+            }
+
+        mesh : Mesh Vertex
+        mesh =
+            meshFromCellGrid style cellGrid
+    in
+    meshToHtml canvas mesh
+
+
+
+-- LOWLEVEL HTML
+
+
+{-| Style an individual cell
+
+    cellStyle : CellStyle Bool
+    cellStyle =
+        { toColor =
+            \b ->
+                if b then
+                    Color.green
+
+                else
+                    Color.red
+        , cellWidth = 10
+        , cellHeight = 10
+        }
+
+-}
+type alias CellStyle a =
+    { toColor : a -> Color
+    , cellWidth : Float
+    , cellHeight : Float
+    }
+
+
+{-| Render a `Mesh Vertex` into an html element of the given width and height.
+-}
+meshToHtml : { width : Int, height : Int } -> WebGL.Mesh Vertex -> Html.Html msg
+meshToHtml { width, height } mesh =
+    WebGL.toHtml
+        [ Html.Attributes.width width
+        , Html.Attributes.height height
+        , Html.Attributes.style "display" "block"
+        ]
+        [ WebGL.entity
+            vertexShader
+            fragmentShader
+            mesh
+            {}
+        ]
+
+
+
+-- BUILD MESH
+
+
+{-| An individual vertex.
 -}
 type alias Vertex =
     { x : Float
@@ -76,69 +127,22 @@ type alias Uniforms =
     {}
 
 
-{-| Render a WebGL "drawing" to a given rectangle on the screen.
+{-| Create a mesh from a grid and a style for each cell.
 -}
-meshToHtml : Int -> Int -> WebGL.Mesh Vertex -> Html.Html msg
-meshToHtml width height mesh =
-    WebGL.toHtml
-        [ Html.Attributes.width width
-        , Html.Attributes.height height
-        , Html.Attributes.style "display" "block"
-        ]
-        [ WebGL.entity
-            vertexShader
-            fragmentShader
-            mesh
-            {}
-        ]
-
-
-{-| Render a CellGrid to a `width x height` rectangle.
--}
-asHtml : Int -> Int -> CellGrid a -> (a -> Color) -> Html.Html msg
-asHtml width height cellGrid temperatureMap =
-    let
-        (CellGrid ( nRows, nCols ) _) =
-            cellGrid
-
-        dw =
-            toFloat width
-                / toFloat (250 * nRows)
-
-        dh =
-            toFloat height
-                / toFloat (250 * nCols)
-    in
-    WebGL.toHtml
-        [ Html.Attributes.width width
-        , Html.Attributes.height height
-        , Html.Attributes.style "display" "block"
-        ]
-        [ WebGL.entity
-            vertexShader
-            fragmentShader
-            (meshFromCellGrid { width = dw, height = dh } temperatureMap cellGrid)
-            {}
-        ]
-
-
-{-| Create a mesh from a cell grid using a temperatureMap. The latter
-assigns to a temperature a triple of RGB values.
--}
-meshFromCellGrid : { width : Float, height : Float } -> (a -> Color) -> CellGrid a -> Mesh Vertex
-meshFromCellGrid rectangle temperatureMap cellGrid =
-    meshFromCellGridHelp rectangle temperatureMap cellGrid
+meshFromCellGrid : CellStyle a -> CellGrid a -> Mesh Vertex
+meshFromCellGrid style cellGrid =
+    meshFromCellGridHelp style cellGrid
         |> WebGL.triangles
 
 
 {-| -}
-meshFromCellGridHelp : { width : Float, height : Float } -> (a -> Color) -> CellGrid a -> List ( Vertex, Vertex, Vertex )
-meshFromCellGridHelp rectangle temperatureMap (CellGrid ( rows, cols ) array) =
+meshFromCellGridHelp : CellStyle a -> CellGrid a -> List ( Vertex, Vertex, Vertex )
+meshFromCellGridHelp style (CellGrid ( rows, cols ) array) =
     let
         folder : a -> ( Int, List ( Vertex, Vertex, Vertex ) ) -> ( Int, List ( Vertex, Vertex, Vertex ) )
         folder value ( index, accum ) =
             ( index - 1
-            , addRectangleFromElement temperatureMap rectangle ( matrixIndex ( rows, cols ) index, value ) accum
+            , addRectangleFromElement style ( matrixIndex ( rows, cols ) index, value ) accum
             )
     in
     Array.foldr folder ( Array.length array - 1, [] ) array
@@ -146,12 +150,11 @@ meshFromCellGridHelp rectangle temperatureMap (CellGrid ( rows, cols ) array) =
 
 
 addRectangleFromElement :
-    (a -> Color)
-    -> { width : Float, height : Float }
+    CellStyle a
     -> ( ( Int, Int ), a )
     -> List ( Vertex, Vertex, Vertex )
     -> List ( Vertex, Vertex, Vertex )
-addRectangleFromElement temperatureMap rectangle ( ( i_, j_ ), t ) accum =
+addRectangleFromElement style ( ( i_, j_ ), t ) accum =
     let
         i =
             toFloat i_
@@ -160,27 +163,31 @@ addRectangleFromElement temperatureMap rectangle ( ( i_, j_ ), t ) accum =
             toFloat j_
 
         x =
-            -1.0 + i * rectangle.width
+            -1.0 + i * style.cellWidth
 
         y =
-            1.0 - j * rectangle.height
+            1.0 - j * style.cellHeight
 
         color =
-            Color.toRgba (temperatureMap t)
+            Color.toRgba (style.toColor t)
 
         v1 =
             ( Vertex x y 0 color.red color.green color.blue
-            , Vertex (x + rectangle.width) y 0 color.red color.green color.blue
-            , Vertex x (y - rectangle.height) 0 color.red color.green color.blue
+            , Vertex (x + style.cellWidth) y 0 color.red color.green color.blue
+            , Vertex x (y - style.cellHeight) 0 color.red color.green color.blue
             )
 
         v2 =
-            ( Vertex (x + rectangle.width) y 0 color.red color.green color.blue
-            , Vertex (x + rectangle.width) (y - rectangle.height) 0 color.red color.green color.blue
-            , Vertex x (y - rectangle.height) 0 color.red color.green color.blue
+            ( Vertex (x + style.cellWidth) y 0 color.red color.green color.blue
+            , Vertex (x + style.cellWidth) (y - style.cellHeight) 0 color.red color.green color.blue
+            , Vertex x (y - style.cellHeight) 0 color.red color.green color.blue
             )
     in
     v1 :: v2 :: accum
+
+
+
+-- SHADERS
 
 
 vertexShader : Shader Vertex Uniforms { vcolor : Vec3 }
