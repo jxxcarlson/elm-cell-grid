@@ -1,8 +1,12 @@
 module CellGrid exposing
-    ( CellGrid(..), CellType(..)
+    ( CellGrid(..)
     , empty, initialize, repeat, fromList
-    , map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue, matrixIndex, matrixIndices
+    , map, indexedMap
+    , foldl, foldr, transform
+    , get, set, update
     , adjacent, neighbors
+    , CellType(..), classifyCell
+    , arrayIndex, matrixIndex, matrixIndices
     )
 
 {-| The CellGrid package provides a type for representing
@@ -10,9 +14,9 @@ a rectangular grid of cells. CellGrids can be created,
 transformed, and rendered as either SVG or HTML.
 
 
-## Types
+## Type
 
-@docs CellGrid, CellType
+@docs CellGrid
 
 
 ## Constructing and rendering CellGrids
@@ -20,11 +24,26 @@ transformed, and rendered as either SVG or HTML.
 @docs empty, initialize, repeat, fromList
 
 
-## Work with cells
+## Array-like functions
 
-@docs map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue, matrixIndex, matrixIndices
+@docs map, indexedMap
+@docs foldl, foldr, transform
 
+
+## Individual cell manipulation
+
+@docs get, set, update
 @docs adjacent, neighbors
+
+
+## Cell types
+
+@docs CellType, classifyCell
+
+
+## Index helpers
+
+@docs arrayIndex, matrixIndex, matrixIndices
 
 -}
 
@@ -54,34 +73,32 @@ empty =
     CellGrid ( 0, 0 ) (Array.fromList [])
 
 
-{-| Construct a Maybe CellGrid from a list of values of type `a`.
-Here is a 2x2 cell grid of type `Float`:
+{-| Construct cell grid from a list of values.
+Grid construction fails when an amount of values incompatible with the dimensions is given.
 
-    > cg = fromList 2 2 [1.0,2.0,3.0,4.0]
-      Just (CellGrid (2,2) (Array.fromList [1,2,3,4]))
-      : Maybe (CellGrid Float)
+    fromList ( 2, 2 ) [ 1.0, 2.0, 3.0, 4.0 ]
+        --> Just (CellGrid (2,2) (Array.fromList [1,2,3,4]))
 
-If the length of the list is incompatible with the
-given number of rows and columns `Nothing` is returned.
-
-    > fromList 2 2 [1.0,2.0,3.0,4.0, 5.0]
-      Nothing : Maybe (CellGrid Float)
+    fromList ( 2, 2 ) [ 1.0, 2.0, 3.0, 4.0, 5.0 ]
+        --> Nothing
 
 -}
-fromList : Int -> Int -> List a -> Maybe (CellGrid a)
-fromList nRows nColumns data =
-    case List.length data == nRows * nColumns of
-        True ->
-            Just <| CellGrid ( nRows, nColumns ) (Array.fromList data)
+fromList : ( Int, Int ) -> List a -> Maybe (CellGrid a)
+fromList ( nRows, nColumns ) data =
+    if List.length data == nRows * nColumns then
+        Just <| CellGrid ( nRows, nColumns ) (Array.fromList data)
 
-        False ->
-            Nothing
+    else
+        Nothing
 
 
-{-| Map a function over a CellGrid:
+{-| Map a function over a cell grid.
 
-    > map (\x -> 2*x) cg
-    CellGrid (2,2) (Array.fromList [2,4,6,8])
+    cg : CellGrid Int
+    cg = CellGrid.initialize (2,2) (\i j -> i + j)
+
+    CellGrid.map (\x -> 2*x) cg
+        --> CellGrid (2,2) (Array.fromList [2,4,6,8])
 
 -}
 map : (a -> b) -> CellGrid a -> CellGrid b
@@ -89,55 +106,65 @@ map f (CellGrid ( nRows, nCols ) cells) =
     CellGrid ( nRows, nCols ) (Array.map f cells)
 
 
-{-| Fold a reducer (a -> b -> b) over a CellGrid a)
+{-| Fold a reducer (a -> b -> b) over a `CellGrid a`, associating to the left.
 -}
 foldl : (a -> b -> b) -> b -> CellGrid a -> b
-foldl reducer initialValue (CellGrid ( _, _ ) cells) =
+foldl reducer initialValue (CellGrid _ cells) =
     Array.foldl reducer initialValue cells
 
 
-{-| Transform a CellGrid a with a function ((Int, Int) -> a -> a).
-Used when the transformed value depends on its matrixIndex as well
-as its value
+{-| Fold a reducer (a -> b -> b) over a `CellGrid a`, associating to the right.
 -}
-mapWithIndex : (( Int, Int ) -> a -> b) -> CellGrid a -> CellGrid b
-mapWithIndex cellTransformer (CellGrid ( nRows, nCols ) cells) =
+foldr : (a -> b -> b) -> b -> CellGrid a -> b
+foldr reducer initialValue (CellGrid _ cells) =
+    Array.foldr reducer initialValue cells
+
+
+{-| Transform a cell grid while having access to a cell's position
+
+    indexedMap (\i j value -> value + i * j) cellGrid
+
+-}
+indexedMap : (Int -> Int -> a -> b) -> CellGrid a -> CellGrid b
+indexedMap f (CellGrid ( nRows, nCols ) cells) =
     let
-        indexedCellTransformer =
-            \k a -> cellTransformer (matrixIndex ( nRows, nCols ) k) a
+        indexedCellTransformer index value =
+            let
+                ( i, j ) =
+                    matrixIndex { rows = nRows, columns = nCols } index
+            in
+            f i j value
     in
     CellGrid ( nRows, nCols ) (Array.indexedMap indexedCellTransformer cells)
 
 
-{-| Transform a CellGrid using a function
-
-    (Int, Int) -> CellGrid a -> a)
-
+{-| Modify a cell while having access to the full cell grid.
+The supplied cell grid is always the original input. Useful for simulations that need neigbor information, like [Conway's game of life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life).
 -}
-transform : (( Int, Int ) -> CellGrid a -> b) -> CellGrid a -> CellGrid b
+transform : (Int -> Int -> CellGrid a -> b) -> CellGrid a -> CellGrid b
 transform newCellValue ((CellGrid ( w, h ) elements) as grid) =
     let
-        folder element ( ( i, j ), acc ) =
-            ( nextIndex ( w, h ) ( i, j ), Array.push (newCellValue ( i, j ) grid) acc )
+        folder _ ( i, j, acc ) =
+            let
+                ( nextR, nextC ) =
+                    if j < w - 1 then
+                        ( i, j + 1 )
+
+                    else
+                        ( i + 1, 0 )
+            in
+            ( nextR, nextC, Array.push (newCellValue i j grid) acc )
     in
-    Array.foldl folder ( ( 0, 0 ), Array.empty ) elements
-        |> Tuple.second
+    Array.foldl folder ( 0, 0, Array.empty ) elements
+        |> (\( _, _, value ) -> value)
         |> CellGrid ( w, h )
-
-
-nextIndex ( w, h ) ( i, j ) =
-    if j < w - 1 then
-        ( i, j + 1 )
-
-    else
-        ( i + 1, 0 )
 
 
 {-| Give list of the call values at the eight neighgoring cells
 -}
 neighbors : ( Int, Int ) -> CellGrid a -> List a
 neighbors ( x, y ) grid =
-    List.filterMap (\index_ -> cellAtMatrixIndex index_ grid)
+    List.filterMap (\index_ -> get index_ grid)
         [ ( x, y + 1 )
         , ( x - 1, y + 1 )
         , ( x - 1, y )
@@ -153,7 +180,7 @@ neighbors ( x, y ) grid =
 -}
 adjacent : ( Int, Int ) -> CellGrid a -> List a
 adjacent ( x, y ) grid =
-    List.filterMap (\index_ -> cellAtMatrixIndex index_ grid)
+    List.filterMap (\index_ -> get index_ grid)
         [ ( x, y + 1 )
         , ( x - 1, y )
         , ( x, y - 1 )
@@ -171,9 +198,12 @@ cols (CellGrid ( r_, cols_ ) _) =
     cols_
 
 
-dimensions : CellGrid a -> ( Int, Int )
-dimensions (CellGrid idx _) =
-    idx
+
+{-
+   dimensions : CellGrid a -> ( Int, Int )
+   dimensions (CellGrid idx _) =
+       idx
+-}
 
 
 {-| Consider a 1D array of elements which represents
@@ -181,53 +211,82 @@ a 2D array with n rows. Then `index  n (i,j)`
 is the index in the 1D array of the corresponding
 element in the 2D array at location (i,j)\`
 -}
-index : Int -> ( Int, Int ) -> Int
-index nCols ( row, col ) =
+arrayIndex : Int -> ( Int, Int ) -> Int
+arrayIndex nCols ( row, col ) =
     nCols * row + col
 
 
 {-| Conversely, `(nRows, nCols) k` is the
 2D array index `(i,j)` of the element al index `k`
 -}
-matrixIndex : ( Int, Int ) -> Int -> ( Int, Int )
-matrixIndex ( nRows, nCols ) n =
-    ( n // nCols, modBy nCols n )
+matrixIndex : { rows : Int, columns : Int } -> Int -> ( Int, Int )
+matrixIndex dimensions n =
+    ( n // dimensions.columns, modBy dimensions.columns n )
 
 
 {-| Return the Maybe value of the cell at (i,j) from grid
 
-    > cellAtMatrixIndex (1,1) cg
+    > get (1,1) cg
     Just 4 : Maybe Float
 
 -}
-cellAtMatrixIndex : ( Int, Int ) -> CellGrid a -> Maybe a
-cellAtMatrixIndex ( i, j ) grid =
+get : ( Int, Int ) -> CellGrid a -> Maybe a
+get ( i, j ) grid =
     let
         (CellGrid ( _, nCols ) array) =
             grid
     in
-    Array.get (index nCols ( i, j )) array
+    Array.get (arrayIndex nCols ( i, j )) array
 
 
 {-| Set the value of the cell at location (i,j)
 -}
-setValue : CellGrid a -> ( Int, Int ) -> a -> CellGrid a
-setValue (CellGrid ( nRows, nCols ) values) ( i, j ) value =
+set : ( Int, Int ) -> a -> CellGrid a -> CellGrid a
+set ( i, j ) value (CellGrid ( nRows, nCols ) values) =
     let
         k =
-            index nRows ( i, j )
+            arrayIndex nRows ( i, j )
     in
     CellGrid ( nRows, nCols ) (Array.set k value values)
 
 
+{-| Update the value at a location `(row, column)`.
+-}
+update : ( Int, Int ) -> (a -> a) -> CellGrid a -> CellGrid a
+update location updater ((CellGrid ( nRows, nCols ) array) as cellGrid) =
+    let
+        position =
+            arrayIndex nRows location
+    in
+    case Array.get position array of
+        Nothing ->
+            cellGrid
+
+        Just value ->
+            CellGrid ( nRows, nCols ) (Array.set position (updater value) array)
+
+
 {-| return the type of the cell at location (i,j). Thus
 classifyCell grid (0,0) = Corner
+
+    cg : CellGrid Int
+    cg = CellGrid.initialize (3,3) (\i j -> i + j)
+
+    CellGrid.classifyCell (0,0) cg
+        --> Corner
+
+    CellGrid.classifyCell (0,1) cg
+        --> Edge
+
+    CellGrid.classifyCell (1,1) cg
+        --> Interior
+
 -}
 classifyCell : CellGrid a -> ( Int, Int ) -> CellType
 classifyCell cellGrid ( i, j ) =
     let
-        ( nRows, nCols ) =
-            dimensions cellGrid
+        (CellGrid ( nRows, nCols ) _) =
+            cellGrid
 
         mri =
             nRows - 1
@@ -297,14 +356,14 @@ matrixIndices (CellGrid ( nRows, nCols ) _) =
 {-| Initialize a cell grid. `initialize (row, column) f` creates a
 cell grid of size `(row, column)` with the element at `(i, j)` set to the result of `f (i, j)`.
 
-    CellGrid.initialize (2,2) Tuple.first
+    CellGrid.initialize (2,2)  (\i j -> i)
         --> CellGrid.fromList 2 2 [ 0, 0, 1, 1 ]
 
-    CellGrid.initalize ( 2, 3 ) (\( i, j ) -> toFloat (i + j))
+    CellGrid.initalize ( 2, 3 ) (\i j -> toFloat (i + j))
         --> CellGrid.fromList 2 3 [ 0, 1, 2, 1, 2, 3 ]
 
 -}
-initialize : ( Int, Int ) -> (( Int, Int ) -> a) -> CellGrid a
+initialize : ( Int, Int ) -> (Int -> Int -> a) -> CellGrid a
 initialize ( nRows, nCols ) temperatureMap =
     let
         maxRow =
@@ -320,11 +379,11 @@ initialize ( nRows, nCols ) temperatureMap =
 
             else if column == maxColumn then
                 -- last column of the row: increment row, reset column
-                go (row + 1) 0 (Array.push (temperatureMap ( row, column )) accum)
+                go (row + 1) 0 (Array.push (temperatureMap row column) accum)
 
             else
                 -- somewhere in the interior: increment column
-                go row (column + 1) (Array.push (temperatureMap ( row, column )) accum)
+                go row (column + 1) (Array.push (temperatureMap row column) accum)
     in
     CellGrid ( nRows, nCols ) (go 0 0 Array.empty)
 

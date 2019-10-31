@@ -142,7 +142,7 @@ meshFromCellGridHelp style (CellGrid ( rows, cols ) array) =
         folder : a -> ( Int, List ( Vertex, Vertex, Vertex ) ) -> ( Int, List ( Vertex, Vertex, Vertex ) )
         folder value ( index, accum ) =
             ( index - 1
-            , addRectangleFromElement style ( matrixIndex ( rows, cols ) index, value ) accum
+            , addRectangleFromElement style ( matrixIndex { rows = rows, columns = cols } index, value ) accum
             )
     in
     Array.foldr folder ( Array.length array - 1, [] ) array
