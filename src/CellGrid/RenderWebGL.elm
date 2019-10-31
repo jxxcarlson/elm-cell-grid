@@ -46,14 +46,14 @@ The cells are stretched to use up all available space. For customized cell sizes
 
 -}
 asHtml : { width : Int, height : Int } -> (a -> Color) -> CellGrid a -> Html.Html msg
-asHtml ({ width, height } as canvas) toColor ((CellGrid ( nRows, nCols ) _) as cellGrid) =
+asHtml ({ width, height } as canvas) toColor ((CellGrid { rows, columns } _) as cellGrid) =
     let
         -- why 250?
         style : CellStyle a
         style =
             { toColor = toColor
-            , cellWidth = toFloat width / toFloat (250 * nRows)
-            , cellHeight = toFloat height / toFloat (250 * nCols)
+            , cellWidth = toFloat width / toFloat (250 * rows)
+            , cellHeight = toFloat height / toFloat (250 * columns)
             }
 
         mesh : Mesh Vertex
@@ -137,12 +137,12 @@ meshFromCellGrid style cellGrid =
 
 {-| -}
 meshFromCellGridHelp : CellStyle a -> CellGrid a -> List ( Vertex, Vertex, Vertex )
-meshFromCellGridHelp style (CellGrid ( rows, cols ) array) =
+meshFromCellGridHelp style (CellGrid { rows, columns } array) =
     let
         folder : a -> ( Int, List ( Vertex, Vertex, Vertex ) ) -> ( Int, List ( Vertex, Vertex, Vertex ) )
         folder value ( index, accum ) =
             ( index - 1
-            , addRectangleFromElement style ( matrixIndex { rows = rows, columns = cols } index, value ) accum
+            , addRectangleFromElement style ( matrixIndex { rows = rows, columns = columns } index, value ) accum
             )
     in
     Array.foldr folder ( Array.length array - 1, [] ) array
