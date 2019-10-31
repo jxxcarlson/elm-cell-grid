@@ -15,7 +15,7 @@ suite =
         [ describe "meshWithColorizer"
             [ test "2x2 0x0" <|
                 \_ ->
-                    CellGrid.RenderWebGL.meshWithColorizerHelp (\_ -> Color.black) ( 2, 2 ) { width = 0, height = 0 }
+                    meshWithColorizerNew (\_ -> Color.black) ( 2, 2 ) { width = 0, height = 0 }
                         |> Expect.equal
                             [ ( { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 } )
                             , ( { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 } )
@@ -28,7 +28,7 @@ suite =
                             ]
             , test "2x2 1x1" <|
                 \_ ->
-                    CellGrid.RenderWebGL.meshWithColorizerHelp (\_ -> Color.black) ( 2, 2 ) { width = 1, height = 1 }
+                    meshWithColorizerNew (\_ -> Color.black) ( 2, 2 ) { width = 1, height = 1 }
                         |> Expect.equal
                             [ ( { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 0, z = 0 } )
                             , ( { r = 0, g = 0, b = 0, x = 0, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 0, z = 0 } )
@@ -39,16 +39,6 @@ suite =
                             , ( { r = 0, g = 0, b = 0, x = 0, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = 1, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = -1, z = 0 } )
                             , ( { r = 0, g = 0, b = 0, x = 1, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = 1, y = -1, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = -1, z = 0 } )
                             ]
-            , test "new implementation is equivalent" <|
-                \_ ->
-                    let
-                        old =
-                            CellGrid.RenderWebGL.meshWithColorizerHelp (\_ -> Color.black) ( 2, 2 ) { width = 1, height = 1 }
-
-                        new =
-                            meshWithColorizerNew (\_ -> Color.black) ( 2, 2 ) { width = 1, height = 1 }
-                    in
-                    new |> Expect.equal old
             ]
         , describe "meshFromCellGrid" <|
             case CellGrid.fromList 2 2 [ 1.0, 2.0, 3.0, 4.0 ] of

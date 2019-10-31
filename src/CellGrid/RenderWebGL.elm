@@ -2,12 +2,11 @@ module CellGrid.RenderWebGL exposing
     ( Vertex
     , asHtml
     , meshFromCellGrid
-    , meshWithColorizer
     , meshToHtml
-    , meshWithColorizerHelp, meshFromCellGridHelp
+    , meshFromCellGridHelp
     )
 
-{-| The CellGrid.RenderWebGL package provides functions for rendereing CellGrid to WebGL
+{-| The CellGrid.RenderWebGL module provides functions for rendereing CellGrid to WebGL
 
 
 ## Types
@@ -27,20 +26,8 @@ module CellGrid.RenderWebGL exposing
 
 ### recreating `meshWithColorizer`
 
-@docs meshWithColorizer
-
-A previous version of this package has a function:
-
-    meshWithColorizer :
-        (( Int, Int ) -> Color)
-        -> ( Int, Int )
-        ->
-            { width : Float
-            , height : Float
-            }
-        -> Mesh Vertex
-
-This can be recreated using `CellGrid.initialize` and `meshFromCellGrid`:
+A previous version of this package had a `meshWithColorizer` function.
+It can be recreated using `CellGrid.initialize` and `meshFromCellGrid`:
 
     meshWithColorizer :
         (( Int, Int ) -> Color)
@@ -60,7 +47,7 @@ This can be recreated using `CellGrid.initialize` and `meshFromCellGrid`:
 Internal functions exposed for testing.
 
 @docs meshToHtml
-@docs meshWithColorizerHelp, meshFromCellGridHelp
+@docs meshFromCellGridHelp
 
 -}
 
@@ -87,13 +74,6 @@ type alias Vertex =
 
 type alias Uniforms =
     {}
-
-
-{-| The type of a function which assigns a color to a cell, the
-latter given by its row and column indices
--}
-type alias Colorizer =
-    ( Int, Int ) -> Color
 
 
 {-| Render a WebGL "drawing" to a given rectangle on the screen.
@@ -142,30 +122,6 @@ asHtml width height cellGrid temperatureMap =
         ]
 
 
-{-| Create a rows x cols Vertex Mesh representing an array of rectanagles of
-size (dw, dh). The vertex colors (uniform over a rectangular cell) are determined by
-the colorizer functionion which has type (Int, Int) -> Vec3
--}
-meshWithColorizer : (( Int, Int ) -> Color) -> ( Int, Int ) -> { width : Float, height : Float } -> Mesh Vertex
-meshWithColorizer colorizer position size =
-    meshWithColorizerHelp colorizer position size
-        |> WebGL.triangles
-
-
-{-| -}
-meshWithColorizerHelp : Colorizer -> ( Int, Int ) -> { width : Float, height : Float } -> List ( Vertex, Vertex, Vertex )
-meshWithColorizerHelp colorizer ( rows, cols ) rectangle =
-    let
-        go i accum =
-            if i >= 0 then
-                go (i - 1) (addRectangleAtIndex colorizer rectangle (matrixIndex ( rows, cols ) i) accum)
-
-            else
-                accum
-    in
-    go (rows * cols - 1) []
-
-
 {-| Create a mesh from a cell grid using a temperatureMap. The latter
 assigns to a temperature a triple of RGB values.
 -}
@@ -187,44 +143,6 @@ meshFromCellGridHelp rectangle temperatureMap (CellGrid ( rows, cols ) array) =
     in
     Array.foldr folder ( Array.length array - 1, [] ) array
         |> Tuple.second
-
-
-addRectangleAtIndex :
-    Colorizer
-    -> { width : Float, height : Float }
-    -> ( Int, Int )
-    -> List ( Vertex, Vertex, Vertex )
-    -> List ( Vertex, Vertex, Vertex )
-addRectangleAtIndex colorizer rectangle ( i_, j_ ) accum =
-    let
-        i =
-            toFloat i_
-
-        j =
-            toFloat j_
-
-        x =
-            -1.0 + i * rectangle.width
-
-        y =
-            1.0 - j * rectangle.height
-
-        color =
-            Color.toRgba (colorizer ( i_, j_ ))
-
-        v1 =
-            ( Vertex x y 0 color.red color.green color.blue
-            , Vertex (x + rectangle.width) y 0 color.red color.green color.blue
-            , Vertex x (y - rectangle.height) 0 color.red color.green color.blue
-            )
-
-        v2 =
-            ( Vertex (x + rectangle.width) y 0 color.red color.green color.blue
-            , Vertex (x + rectangle.width) (y - rectangle.height) 0 color.red color.green color.blue
-            , Vertex x (y - rectangle.height) 0 color.red color.green color.blue
-            )
-    in
-    v1 :: v2 :: accum
 
 
 addRectangleFromElement :
