@@ -1,15 +1,14 @@
-module CellGrid.Render exposing (Msg(..), asHtml, asSvg, CellRenderer)
+module CellGrid.Render exposing (Msg, asHtml, asSvg, CellStyle)
 
 {-| The CellGrid package provides a type for representing
 a rectangular grid of cells. CellGrids can be created,
 transformed, and rendered as either SVG or HTML.
 
-@docs Msg, asHtml, asSvg, CellRenderer
+@docs Msg, asHtml, asSvg, CellStyle
 
 -}
 
-import Array exposing (Array)
-import CellGrid exposing (CellGrid(..), cellAtMatrixIndex, matrixIndices)
+import CellGrid exposing (CellGrid(..), Position)
 import Color exposing (Color)
 import Html exposing (Html)
 import Html.Events.Extra.Mouse as Mouse
@@ -20,16 +19,17 @@ import TypedSvg.Core exposing (Svg)
 import TypedSvg.Types exposing (Fill(..))
 
 
-{-| CellRenderer is a record that provides the information --
+{-| CellStyle is a record that provides the information --
 size and color --
 that is needed to render a cell to SVG. `Color` is as
 defined in the package `avh4/elm-color`, e.g. `Color.rgb 1 0 0`,
 which is bright red.
 -}
-type alias CellRenderer a =
-    { cellSize : Float
+type alias CellStyle a =
+    { cellWidth : Float
+    , cellHeight : Float
+    , toColor : a -> Color
     , gridLineWidth : Float
-    , cellColorizer : a -> Color
     , defaultColor : Color
     , gridLineColor : Color
     }
@@ -39,49 +39,61 @@ type alias CellRenderer a =
 of the cell on which the user has clicked as well
 as the local (x,y) coordinates of the cell.
 -}
-type Msg
-    = MouseClick ( Int, Int ) ( Float, Float )
+type alias Msg =
+    { cell : Position
+    , coordinates :
+        { x : Float
+        , y : Float
+        }
+    }
 
 
 {-| Render a cell grid as Html. The first two parameters
 are the width and height of the rendered grid in pixels.
 -}
-asHtml : Float -> Float -> CellRenderer a -> CellGrid a -> Html Msg
-asHtml width_ height_ cr cellGrid =
+asHtml : { width : Int, height : Int } -> CellStyle a -> CellGrid a -> Html Msg
+asHtml { width, height } cr cellGrid =
     svg
-        [ height height_
-        , width width_
-        , viewBox 0 0 width_ height_
+        [ TypedSvg.Attributes.InPx.height (toFloat height)
+        , TypedSvg.Attributes.InPx.width (toFloat width)
+        , TypedSvg.Attributes.viewBox 0 0 (toFloat width) (toFloat height)
         ]
         [ asSvg cr cellGrid ]
 
 
-{-| Render a cell grid as SVG
+{-| Render a cell grid as an svg `<g>` element, useful for integration with other svg.
 -}
-asSvg : CellRenderer a -> CellGrid a -> Svg Msg
-asSvg cr cellGrid =
-    matrixIndices cellGrid
-        |> List.map (renderCell cr cellGrid)
-        |> g []
-
-
-renderCell : CellRenderer a -> CellGrid a -> ( Int, Int ) -> Svg Msg
-renderCell cr cellGrid ( i, j ) =
+asSvg : CellStyle a -> CellGrid a -> Svg Msg
+asSvg style cellGrid =
     let
-        size =
-            cr.cellSize
+        elements =
+            CellGrid.indexedMap (\i j -> renderCell style (Position i j)) cellGrid
+                |> CellGrid.foldr (::) []
+    in
+    g [] elements
 
+
+renderCell : CellStyle a -> Position -> a -> Svg Msg
+renderCell style position value =
+    let
         color =
-            Maybe.map cr.cellColorizer (cellAtMatrixIndex ( i, j ) cellGrid) |> Maybe.withDefault cr.defaultColor
+            style.toColor value
     in
     rect
-        [ width size
-        , height size
-        , x <| size * toFloat i
-        , y <| size * toFloat j
+        [ width style.cellWidth
+        , height style.cellHeight
+        , x <| style.cellWidth * toFloat position.row
+        , y <| style.cellHeight * toFloat position.column
         , fill (Fill color)
-        , Mouse.onDown (.clientPos >> MouseClick ( i, j ))
-        , strokeWidth cr.gridLineWidth
-        , stroke cr.gridLineColor
+        , Mouse.onDown
+            (\r ->
+                let
+                    ( x, y ) =
+                        r.clientPos
+                in
+                { cell = position, coordinates = { x = x, y = y } }
+            )
+        , strokeWidth style.gridLineWidth
+        , stroke style.gridLineColor
         ]
         []
