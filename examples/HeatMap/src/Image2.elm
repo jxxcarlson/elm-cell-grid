@@ -10,7 +10,7 @@ import Json.Decode exposing (Value)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import WebGL exposing (Mesh)
 
-userScale = 0.5
+userScale = 0.6
 
 main : Program Value Float Float
 main =
@@ -25,16 +25,10 @@ main =
 view : Float -> Float -> Html msg
 view scale t =
     let
-        w = round(scale*700)
+        w = round(700*scale)
         g = round(200*scale)
     in
     CellGrid.RenderWebGL.asHtml w w (grid ( g, g )) colorMap
-
---
---mesh : Int -> Float -> Mesh Vertex
---mesh n ds =
---    grid ( n, n )
---        |> CellGrid.RenderWebGL.meshFromCellGrid ( ds, ds ) colorMap
 
 
 colorMap : Float -> Vec3
@@ -44,7 +38,7 @@ colorMap t =
 
 grid : ( Int, Int ) -> CellGrid Float
 grid ( nRows, nCols ) =
-    CellGrid.makeCellGrid ( nRows, nCols ) (temperatureAtIndex ( nRows, nCols ))
+    CellGrid.make ( nRows, nCols ) (temperatureAtIndex ( nRows, nCols ))
 
 
 temperatureAtIndex : ( Int, Int ) -> ( Int, Int ) -> Float

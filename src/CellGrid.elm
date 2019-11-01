@@ -2,7 +2,7 @@ module CellGrid exposing
     ( CellGrid(..), CellType(..)
     , empty, initialize, repeat, fromList
     , map, mapWithIndex, foldl, transform, classifyCell, cellAtMatrixIndex, setValue, matrixIndex, matrixIndices
-    , adjacent, neighbors
+    , adjacent, neighbors, make
     )
 
 {-| The CellGrid package provides a type for representing
@@ -336,3 +336,17 @@ repeat ( nRows, nCols ) value =
             nRows * nCols
     in
     CellGrid ( nRows, nCols ) (Array.repeat n value)
+
+
+{-| Make a CellGrid Float using a temperatureMap. The latter
+assigns a Float to an integer tuple (row, col)
+-}
+make : ( Int, Int ) -> (( Int, Int ) -> Float) -> CellGrid Float
+make ( nRows, nCols ) temperatureMap =
+    let
+        n =
+            nRows * nCols
+    in
+    List.map (matrixIndex ( nRows, nCols )) (List.range 0 (n - 1))
+        |> List.map (\( i, j ) -> temperatureMap ( i, j ))
+        |> (\list -> CellGrid ( nRows, nCols ) (Array.fromList list))

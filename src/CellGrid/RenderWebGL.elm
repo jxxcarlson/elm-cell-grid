@@ -143,7 +143,7 @@ meshFromCellGrid size temperatureMap cellGrid =
 assigns to a temperature a triple of RGB values.
 -}
 meshFromCellGridHelp : ( Float, Float ) -> (Float -> Vec3) -> CellGrid Float -> List ( Vertex, Vertex, Vertex )
-meshFromCellGridHelp ( dw, dh ) temperatureMap (CellGrid ( rows, cols ) array) =
+    meshFromCellGridHelp ( dw, dh ) temperatureMap (CellGrid ( rows, cols ) array) =
     let
         folder : Float -> ( Int, List ( Vertex, Vertex, Vertex ) ) -> ( Int, List ( Vertex, Vertex, Vertex ) )
         folder value ( index, accum ) =
