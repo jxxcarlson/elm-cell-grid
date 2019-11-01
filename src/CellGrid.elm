@@ -312,16 +312,16 @@ get position (CellGrid dimensions array) =
 
 {-| Set a value.
 
-    cg : CellGrid Int
-    cg = CellGrid.repeat (Dimensions 2 2) 42
+    grid : CellGrid Int
+    grid = CellGrid.repeat (Dimensions 2 2) 42
 
-    toLists cg
+    toLists grid
     --> [ [42, 42]
     --> , [42, 42]
     --> ]
 
     new : CellGrid Int
-    new = CellGrid.set (Position 1 1) 84 cg
+    new = CellGrid.set (Position 1 1) 84 grid
 
     toLists new
     --> [ [42, 42]
@@ -373,20 +373,20 @@ update position updater ((CellGrid dimensions array) as cellGrid) =
 
 {-| return the type of the cell.
 
-    cg : CellGrid (Int, Int)
-    cg = CellGrid.initialize (Dimensions 3 3) Tuple.pair
+    grid : CellGrid (Int, Int)
+    grid = CellGrid.initialize (Dimensions 3 3) Tuple.pair
 
-    toLists cg
+    toLists grid
     --> [[(0,0),(0,1),(0,2)]
     --> ,[(1,0),(1,1),(1,2)]
     --> ,[(2,0),(2,1),(2,2)]
     --> ]
 
-    CellGrid.classifyCell (Position 0 0) cg --> Corner
+    CellGrid.classifyCell (Position 0 0) grid --> Corner
 
-    CellGrid.classifyCell (Position 0 1) cg --> Edge
+    CellGrid.classifyCell (Position 0 1) grid --> Edge
 
-    CellGrid.classifyCell (Position 1 1) cg --> Interior
+    CellGrid.classifyCell (Position 1 1) grid --> Interior
 
 -}
 classifyCell : Position -> CellGrid a -> CellType
