@@ -395,10 +395,16 @@ classifyCell position (CellGrid dimensions _) =
         CellGrid.repeat (Dimensions 2 3) True
 
     CellGrid.matrixIndices grid
-        --> [ ( 0, 0 ), ( 0, 1 ), ( 0, 2 ), ( 1, 0 ), ( 1, 1 ), ( 1, 2 ) ]
+    --> [ (Position 0 0)
+    --> , (Position 0 1)
+    --> , (Position 0 2)
+    --> , (Position 1 0)
+    --> , (Position 1 1)
+    --> , (Position 1 2)
+    --> ]
 
 -}
-matrixIndices : CellGrid a -> List ( Int, Int )
+matrixIndices : CellGrid a -> List Position
 matrixIndices (CellGrid dimensions _) =
     let
         -- because `List` is used, we must move from the bottom right corner to the top-left
@@ -416,11 +422,11 @@ matrixIndices (CellGrid dimensions _) =
 
             else if column == 0 then
                 -- last column of the row: decrement row, reset column
-                go (row - 1) maxColumn (( row, column ) :: accum)
+                go (row - 1) maxColumn (Position row column :: accum)
 
             else
                 -- somewhere in the interior: decrement column
-                go row (column - 1) (( row, column ) :: accum)
+                go row (column - 1) (Position row column :: accum)
     in
     go maxRow maxColumn []
 
@@ -477,4 +483,3 @@ repeat dimensions value =
             dimensions.rows * dimensions.columns
     in
     CellGrid dimensions (Array.repeat n value)
-

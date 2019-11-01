@@ -67,7 +67,6 @@ asHtml ({ width, height } as canvas) toColor ((CellGrid { rows, columns } _) as 
 -- LOWLEVEL HTML
 
 
-
 {-| Style an individual cell
 
     cellStyle : CellStyle Bool
@@ -134,7 +133,6 @@ meshFromCellGrid : CellStyle a -> CellGrid a -> Mesh Vertex
 meshFromCellGrid style cellGrid =
     meshFromCellGridHelp style cellGrid
         |> WebGL.triangles
-
 
 
 {-| -}
