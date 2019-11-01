@@ -2,53 +2,71 @@ module Image2 exposing (main)
 
 import Browser
 import Browser.Events exposing (onAnimationFrameDelta)
-import CellGrid exposing (CellGrid(..), matrixIndex)
-import CellGrid.RenderWebGL exposing (Colorizer, Vertex)
+import CellGrid exposing (CellGrid(..), Dimensions, Position, matrixIndex)
+import CellGrid.RenderWebGL exposing (CellStyle, Vertex)
+import Color exposing (Color)
 import Html exposing (Html)
 import Html.Attributes exposing (height, style, width)
-import Json.Decode exposing (Value)
-import Math.Vector3 as Vec3 exposing (Vec3, vec3)
+import Html.Lazy
 import WebGL exposing (Mesh)
 
-userScale = 0.6
 
-main : Program Value Float Float
+userScale =
+    1.0
+
+
+main : Program () Float Float
 main =
     Browser.element
         { init = \_ -> ( 0, Cmd.none )
-        , view = view userScale
+        , view = \model -> Html.Lazy.lazy2 view userScale model
         , subscriptions = \_ -> onAnimationFrameDelta Basics.identity
         , update = \elapsed currentTime -> ( elapsed + currentTime, Cmd.none )
         }
 
 
+cellStyle : CellStyle Color
+cellStyle =
+    { toColor = identity
+    , cellWidth = 0.1
+    , cellHeight = 0.1
+    }
+
+
 view : Float -> Float -> Html msg
 view scale t =
     let
-        w = round(700*scale)
-        g = round(200*scale)
+        w =
+            round (700 * scale)
+
+        g =
+            round (100 * scale)
     in
-    CellGrid.RenderWebGL.asHtml w w (grid ( g, g )) colorMap
+    CellGrid.RenderWebGL.asHtml { width = w, height = w } temperatureToColor (grid (Dimensions g g))
 
 
-colorMap : Float -> Vec3
-colorMap t =
-    vec3 t 0 0
+temperatureToColor : Float -> Color
+temperatureToColor t =
+    Color.rgb t 0 (1 - 0.1*t)
 
 
-grid : ( Int, Int ) -> CellGrid Float
-grid ( nRows, nCols ) =
-    CellGrid.make ( nRows, nCols ) (temperatureAtIndex ( nRows, nCols ))
+grid : Dimensions -> CellGrid Float
+grid dimensions =
+    let
+        initializer i j =
+            temperatureAtIndex dimensions (Position i j)
+    in
+    CellGrid.initialize dimensions initializer
 
 
-temperatureAtIndex : ( Int, Int ) -> ( Int, Int ) -> Float
-temperatureAtIndex ( rows, cols ) ( i, j ) =
+temperatureAtIndex : Dimensions -> Position -> Float
+temperatureAtIndex dimensions position =
     let
         iRatio =
-            toFloat i / toFloat rows
+            toFloat position.row / toFloat dimensions.rows
 
         jRatio =
-            toFloat j / toFloat cols
+            toFloat position.column / toFloat dimensions.columns
 
         pi =
             3.1416
