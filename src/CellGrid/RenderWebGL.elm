@@ -8,6 +8,7 @@ module CellGrid.RenderWebGL exposing
     )
 
 {-| Render a `CellGrid` using WebGL. WebGL is typically faster for a large (1000+) cell grids.
+See also the [examples](https://github.com/jxxcarlson/elm-cell-grid/tree/master/examples).
 
 
 ## Rendering functions
@@ -52,8 +53,8 @@ asHtml ({ width, height } as canvas) toColor ((CellGrid { rows, columns } _) as 
         style : CellStyle a
         style =
             { toColor = toColor
-            , cellWidth = toFloat width / toFloat (250 * rows)
-            , cellHeight = toFloat height / toFloat (250 * columns)
+            , cellWidth = toFloat width / toFloat (250 * columns)
+            , cellHeight = toFloat height / toFloat (250 * rows)
             }
 
         mesh : Mesh Vertex
@@ -157,10 +158,10 @@ addRectangleFromElement :
 addRectangleFromElement style ( position, t ) accum =
     let
         x =
-            -1.0 + toFloat position.row * style.cellWidth
+            -1.0 + toFloat position.column * style.cellWidth
 
         y =
-            1.0 - toFloat position.column * style.cellHeight
+            1.0 - toFloat position.row * style.cellHeight
 
         color =
             Color.toRgba (style.toColor t)
