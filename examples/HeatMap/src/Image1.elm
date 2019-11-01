@@ -32,14 +32,14 @@ initializer i j = arrayIndex dimensions (Position i j)
 
 
 cg : CellGrid Int
-cg = CellGrid.initialize dimensions  (\i j -> i)
+cg = CellGrid.initialize dimensions  (\i j -> i + j)
 
 
 cellStyle : CellStyle Int
 cellStyle =
     { toColor =
         \b ->
-            if modBy 2 b == 0 then
+            if modBy 2 (Debug.log "b" b) == 0 then
                 Color.black
 
             else
@@ -48,6 +48,7 @@ cellStyle =
     , cellHeight = 40
     }
 
+mesh : Mesh Vertex
 mesh = meshFromCellGrid cellStyle cg
 
 
