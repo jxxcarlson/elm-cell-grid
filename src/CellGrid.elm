@@ -7,6 +7,7 @@ module CellGrid exposing
     , adjacent, neighbors
     , CellType(..), classifyCell
     , arrayIndex, matrixIndex, matrixIndices
+    , toLists, incrementing
     )
 
 {-| The CellGrid package provides a type for representing
@@ -44,6 +45,11 @@ transformed, and rendered with either SVG or WebGL.
 ## Index helpers
 
 @docs arrayIndex, matrixIndex, matrixIndices
+
+
+## Documentation helpers
+
+@docs toLists, incrementing
 
 -}
 
@@ -112,19 +118,21 @@ fromList dimensions data =
 
 {-| Map a function over a cell grid.
 
-    import Array
+    grid : CellGrid Int
+    grid = CellGrid.incrementing (Dimensions 2 2)
 
-    dimensions : Dimensions
-    dimensions = Dimensions 2 2
+    toLists grid
+    --> [ [0,1]
+    --> , [2,3]
+    --> ]
 
-    initializer : Int -> Int -> Int
-    initializer i j = arrayIndex dimensions (Position i j)
+    doubled : CellGrid Int
+    doubled = CellGrid.map (\v -> v * 2) grid
 
-    cg : CellGrid Int
-    cg = CellGrid.initialize dimensions initializer
-
-    CellGrid.map (\x -> 2*x) cg
-        --> CellGrid dimensions (Array.fromList [0,2,4,6])
+    toLists doubled
+    --> [ [0,2]
+    --> , [4,6]
+    --> ]
 
 -}
 map : (a -> b) -> CellGrid a -> CellGrid b
@@ -132,14 +140,19 @@ map f (CellGrid dimensions cells) =
     CellGrid dimensions (Array.map f cells)
 
 
-{-| Fold a reducer (a -> b -> b) over a `CellGrid a`, associating to the left.
+{-| Fold a function of type `a -> b -> b` over a `CellGrid a`, associating to the left.
 -}
 foldl : (a -> b -> b) -> b -> CellGrid a -> b
 foldl reducer initialValue (CellGrid _ cells) =
     Array.foldl reducer initialValue cells
 
 
-{-| Fold a reducer (a -> b -> b) over a `CellGrid a`, associating to the right.
+{-| Fold a reducer `a -> b -> b` over a `CellGrid a`, associating to the right.
+
+    toList : CellGrid a -> List a
+    toList grid =
+        CellGrid.foldr (::) [] grid
+
 -}
 foldr : (a -> b -> b) -> b -> CellGrid a -> b
 foldr reducer initialValue (CellGrid _ cells) =
@@ -188,16 +201,16 @@ transform newCellValue ((CellGrid dimensions elements) as grid) =
 
 {-| Get the list of cell values of the eight neighboring cells.
 
-    dimensions : Dimensions
-    dimensions = Dimensions 3 3
+    grid : CellGrid Int
+    grid = CellGrid.incrementing (Dimensions 3 3)
 
-    initializer : Int -> Int -> Int
-    initializer i j = arrayIndex dimensions (Position i j)
+    toLists grid
+    --> [ [0,1,2]
+    --> , [3,4,5]
+    --> , [6,7,8]
+    --> ]
 
-    cg : CellGrid Int
-    cg = CellGrid.initialize dimensions initializer
-
-    CellGrid.neighbors ( Position 1 1 )  cg
+    CellGrid.neighbors ( Position 1 1 )  grid
         --> [5,2,1,0,3,6,7,8]
 
 -}
@@ -224,16 +237,16 @@ neighbors position grid =
 
 {-| Get the list of cell values of the four adjacent cells.
 
-    dimensions : Dimensions
-    dimensions = Dimensions 3 3
+    grid : CellGrid Int
+    grid = CellGrid.incrementing (Dimensions 3 3)
 
-    initializer : Int -> Int -> Int
-    initializer i j = arrayIndex dimensions (Position i j)
+    toLists grid
+    --> [ [0,1,2]
+    --> , [3,4,5]
+    --> , [6,7,8]
+    --> ]
 
-    cg : CellGrid Int
-    cg = CellGrid.initialize dimensions initializer
-
-    CellGrid.adjacent (Position 1 1) cg
+    CellGrid.adjacent (Position 1 1) grid
         --> [5,1,3,7]
 
 -}
@@ -280,13 +293,16 @@ matrixIndex dimensions n =
 
 {-| Get a value.
 
-    import Array
+    grid : CellGrid Int
+    grid = CellGrid.incrementing (Dimensions 2 2)
 
-    cg : CellGrid Int
-    cg = CellGrid (Dimensions 2 2) (Array.fromList [1,2,3,4])
+    toLists grid
+    --> [ [0, 1]
+    --> , [2, 3]
+    --> ]
 
-    CellGrid.get (Position 1 1) cg
-        --> Just 4
+    CellGrid.get (Position 1 1) grid
+        --> Just 3
 
 -}
 get : Position -> CellGrid a -> Maybe a
@@ -296,13 +312,21 @@ get position (CellGrid dimensions array) =
 
 {-| Set a value.
 
-    import Array
-
     cg : CellGrid Int
     cg = CellGrid.repeat (Dimensions 2 2) 42
 
-    CellGrid.set (Position 1 1) 84 cg
-        --> CellGrid (Dimensions 2 2) (Array.fromList [42,42,42,84])
+    toLists cg
+    --> [ [42, 42]
+    --> , [42, 42]
+    --> ]
+
+    new : CellGrid Int
+    new = CellGrid.set (Position 1 1) 84 cg
+
+    toLists new
+    --> [ [42, 42]
+    --> , [42, 84]
+    --> ]
 
 -}
 set : Position -> a -> CellGrid a -> CellGrid a
@@ -316,13 +340,21 @@ set position value (CellGrid dimensions values) =
 
 {-| Update a value.
 
-    import Array
+    grid : CellGrid Int
+    grid = CellGrid.repeat (Dimensions 2 2) 42
 
-    cg : CellGrid Int
-    cg = CellGrid.repeat (Dimensions 2 2) 42
+    toLists grid
+    --> [ [42, 42]
+    --> , [42, 42]
+    --> ]
 
-    CellGrid.update (Position 1 1) (\v -> 2 * v) cg
-        --> CellGrid (Dimensions 2 2) (Array.fromList [42,42,42,84])
+    new : CellGrid Int
+    new = CellGrid.update (Position 1 1) (\v -> 2 * v) grid
+
+    toLists new
+    --> [ [42, 42]
+    --> , [42, 84]
+    --> ]
 
 -}
 update : Position -> (a -> a) -> CellGrid a -> CellGrid a
@@ -341,17 +373,20 @@ update position updater ((CellGrid dimensions array) as cellGrid) =
 
 {-| return the type of the cell.
 
-    cg : CellGrid Int
-    cg = CellGrid.repeat (Dimensions 3 3) 0
+    cg : CellGrid (Int, Int)
+    cg = CellGrid.initialize (Dimensions 3 3) Tuple.pair
 
-    CellGrid.classifyCell (Position 0 0) cg
-        --> Corner
+    toLists cg
+    --> [[(0,0),(0,1),(0,2)]
+    --> ,[(1,0),(1,1),(1,2)]
+    --> ,[(2,0),(2,1),(2,2)]
+    --> ]
 
-    CellGrid.classifyCell (Position 0 1) cg
-        --> Edge
+    CellGrid.classifyCell (Position 0 0) cg --> Corner
 
-    CellGrid.classifyCell (Position 1 1) cg
-        --> Interior
+    CellGrid.classifyCell (Position 0 1) cg --> Edge
+
+    CellGrid.classifyCell (Position 1 1) cg --> Interior
 
 -}
 classifyCell : Position -> CellGrid a -> CellType
@@ -436,8 +471,13 @@ cell grid of size `(row, column)` with the element at `(i, j)` set to the result
 
     import Array
 
-    CellGrid.initialize (Dimensions 2 2) (\i j -> i)
-        --> CellGrid (Dimensions 2 2) (Array.fromList [ 0, 0, 1, 1 ])
+    grid1 : CellGrid Int
+    grid1 = CellGrid.initialize (Dimensions 2 2) (\i j -> i)
+
+    toLists grid1
+    --> [ [0,0]
+    --> , [1,1]
+    --> ]
 
     CellGrid.initialize (Dimensions 2 3) (\i j -> toFloat (i + j))
         --> CellGrid (Dimensions 2 3) (Array.fromList [ 0, 1, 2, 1, 2, 3 ])
@@ -483,3 +523,55 @@ repeat dimensions value =
             dimensions.rows * dimensions.columns
     in
     CellGrid dimensions (Array.repeat n value)
+
+
+{-| Convert a cell grid to a list of rows of values
+-}
+toLists : CellGrid a -> List (List a)
+toLists (CellGrid dimensions array) =
+    let
+        folder value ( column, rowAccum, rowsAccum ) =
+            if column == dimensions.columns then
+                ( 1, [ value ], rowAccum :: rowsAccum )
+
+            else
+                ( column + 1, value :: rowAccum, rowsAccum )
+    in
+    let
+        ( _, rowAccum, rowsAccum ) =
+            Array.foldr folder ( 0, [], [] ) array
+
+        rows =
+            rowAccum :: rowsAccum
+    in
+    rows
+
+
+{-| An incrementing integer cell grid
+
+    toLists (incrementing (Dimensions 3 3))
+    --> [[0,1,2]
+    --> ,[3,4,5]
+    --> ,[6,7,8]
+    --> ]
+
+Defined as
+
+    incrementing : Dimensions -> CellGrid Int
+    incrementing dimensions =
+        let
+            initializer : Int -> Int -> Int
+            initializer i j =
+                arrayIndex dimensions (Position i j)
+        in
+        initialize dimensions initializer
+
+-}
+incrementing : Dimensions -> CellGrid Int
+incrementing dimensions =
+    let
+        initializer : Int -> Int -> Int
+        initializer i j =
+            arrayIndex dimensions (Position i j)
+    in
+    initialize dimensions initializer
