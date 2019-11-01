@@ -91,8 +91,8 @@ renderCell style position value =
     TypedSvg.rect
         [ width style.cellWidth
         , height style.cellHeight
-        , x <| style.cellWidth * toFloat position.row
-        , y <| style.cellHeight * toFloat position.column
+        , x <| style.cellWidth * toFloat position.column
+        , y <| style.cellHeight * toFloat position.row
         , fill (Fill (style.toColor value))
         , Mouse.onDown
             (\r ->
