@@ -1,13 +1,13 @@
 module TestRenderWebGL exposing (suite)
 
-import CellGrid exposing (CellGrid, CellType(..), matrixIndices, setValue)
+import CellGrid exposing (CellGrid, CellType(..), Dimensions, Position, matrixIndices)
 import CellGrid.RenderWebGL
-import Color
+import Color exposing (Color)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
 import Math.Vector3 as Vec3
 import Test exposing (..)
-import WebGL
+import WebGL exposing (Mesh)
 
 
 suite =
@@ -15,49 +15,58 @@ suite =
         [ describe "meshWithColorizer"
             [ test "2x2 0x0" <|
                 \_ ->
-                    CellGrid.RenderWebGL.meshWithColorizerHelp (\_ -> Vec3.vec3 0 0 0) ( 2, 2 ) ( 0, 0 )
+                    meshWithColorizerNew (Dimensions 2 2) { cellHeight = 0, cellWidth = 0, toColor = \_ -> Color.black }
                         |> Expect.equal
-                            [ ( { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 } )
-                            , ( { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 } )
-                            , ( { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 } )
-                            , ( { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 } )
-                            , ( { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 } )
-                            , ( { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 } )
-                            , ( { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 } )
-                            , ( { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 } )
+                            [ ( { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 } )
+                            , ( { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 } )
+                            , ( { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 } )
+                            , ( { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 } )
+                            , ( { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 } )
+                            , ( { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 } )
+                            , ( { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 } )
+                            , ( { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 } )
                             ]
             , test "2x2 1x1" <|
                 \_ ->
-                    CellGrid.RenderWebGL.meshWithColorizerHelp (\_ -> Vec3.vec3 0 0 0) ( 2, 2 ) ( 1, 1 )
+                    meshWithColorizerNew (Dimensions 2 2) { cellHeight = 1, cellWidth = 1, toColor = \_ -> Color.black }
                         |> Expect.equal
-                            [ ( { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = 0, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 0, z = 0 } )
-                            , ( { color = Vec3.vec3 0 0 0, x = 0, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = 0, y = 0, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 0, z = 0 } )
-                            , ( { color = Vec3.vec3 0 0 0, x = -1, y = 0, z = 0 }, { color = Vec3.vec3 0 0 0, x = 0, y = 0, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = -1, z = 0 } )
-                            , ( { color = Vec3.vec3 0 0 0, x = 0, y = 0, z = 0 }, { color = Vec3.vec3 0 0 0, x = 0, y = -1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = -1, z = 0 } )
-                            , ( { color = Vec3.vec3 0 0 0, x = 0, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = 1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = 0, y = 0, z = 0 } )
-                            , ( { color = Vec3.vec3 0 0 0, x = 1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = 1, y = 0, z = 0 }, { color = Vec3.vec3 0 0 0, x = 0, y = 0, z = 0 } )
-                            , ( { color = Vec3.vec3 0 0 0, x = 0, y = 0, z = 0 }, { color = Vec3.vec3 0 0 0, x = 1, y = 0, z = 0 }, { color = Vec3.vec3 0 0 0, x = 0, y = -1, z = 0 } )
-                            , ( { color = Vec3.vec3 0 0 0, x = 1, y = 0, z = 0 }, { color = Vec3.vec3 0 0 0, x = 1, y = -1, z = 0 }, { color = Vec3.vec3 0 0 0, x = 0, y = -1, z = 0 } )
+                            [ ( { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 0, z = 0 } )
+                            , ( { r = 0, g = 0, b = 0, x = 0, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 0, z = 0 } )
+                            , ( { r = 0, g = 0, b = 0, x = -1, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = -1, z = 0 } )
+                            , ( { r = 0, g = 0, b = 0, x = 0, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = -1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = -1, z = 0 } )
+                            , ( { r = 0, g = 0, b = 0, x = 0, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = 1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = 0, z = 0 } )
+                            , ( { r = 0, g = 0, b = 0, x = 1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = 1, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = 0, z = 0 } )
+                            , ( { r = 0, g = 0, b = 0, x = 0, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = 1, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = -1, z = 0 } )
+                            , ( { r = 0, g = 0, b = 0, x = 1, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = 1, y = -1, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = -1, z = 0 } )
                             ]
             ]
         , describe "meshFromCellGrid" <|
-            case CellGrid.fromList 2 2 [ 1.0, 2.0, 3.0, 4.0 ] of
+            case CellGrid.fromList (Dimensions 2 2) [ 1.0, 2.0, 3.0, 4.0 ] of
                 Just cellGrid ->
                     [ test "2x2 1x1" <|
                         \_ ->
-                            CellGrid.RenderWebGL.meshFromCellGridHelp ( 1, 1 ) (\_ -> Vec3.vec3 0 0 0) cellGrid
+                            CellGrid.RenderWebGL.meshFromCellGridHelp { cellWidth = 1, cellHeight = 1, toColor = \_ -> Color.black } cellGrid
                                 |> Expect.equal
-                                    [ ( { color = Vec3.vec3 0 0 0, x = -1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = 0, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 0, z = 0 } )
-                                    , ( { color = Vec3.vec3 0 0 0, x = 0, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = 0, y = 0, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = 0, z = 0 } )
-                                    , ( { color = Vec3.vec3 0 0 0, x = -1, y = 0, z = 0 }, { color = Vec3.vec3 0 0 0, x = 0, y = 0, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = -1, z = 0 } )
-                                    , ( { color = Vec3.vec3 0 0 0, x = 0, y = 0, z = 0 }, { color = Vec3.vec3 0 0 0, x = 0, y = -1, z = 0 }, { color = Vec3.vec3 0 0 0, x = -1, y = -1, z = 0 } )
-                                    , ( { color = Vec3.vec3 0 0 0, x = 0, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = 1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = 0, y = 0, z = 0 } )
-                                    , ( { color = Vec3.vec3 0 0 0, x = 1, y = 1, z = 0 }, { color = Vec3.vec3 0 0 0, x = 1, y = 0, z = 0 }, { color = Vec3.vec3 0 0 0, x = 0, y = 0, z = 0 } )
-                                    , ( { color = Vec3.vec3 0 0 0, x = 0, y = 0, z = 0 }, { color = Vec3.vec3 0 0 0, x = 1, y = 0, z = 0 }, { color = Vec3.vec3 0 0 0, x = 0, y = -1, z = 0 } )
-                                    , ( { color = Vec3.vec3 0 0 0, x = 1, y = 0, z = 0 }, { color = Vec3.vec3 0 0 0, x = 1, y = -1, z = 0 }, { color = Vec3.vec3 0 0 0, x = 0, y = -1, z = 0 } )
+                                    [ ( { r = 0, g = 0, b = 0, x = -1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 0, z = 0 } )
+                                    , ( { r = 0, g = 0, b = 0, x = 0, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = 0, z = 0 } )
+                                    , ( { r = 0, g = 0, b = 0, x = -1, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = -1, z = 0 } )
+                                    , ( { r = 0, g = 0, b = 0, x = 0, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = -1, z = 0 }, { r = 0, g = 0, b = 0, x = -1, y = -1, z = 0 } )
+                                    , ( { r = 0, g = 0, b = 0, x = 0, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = 1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = 0, z = 0 } )
+                                    , ( { r = 0, g = 0, b = 0, x = 1, y = 1, z = 0 }, { r = 0, g = 0, b = 0, x = 1, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = 0, z = 0 } )
+                                    , ( { r = 0, g = 0, b = 0, x = 0, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = 1, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = -1, z = 0 } )
+                                    , ( { r = 0, g = 0, b = 0, x = 1, y = 0, z = 0 }, { r = 0, g = 0, b = 0, x = 1, y = -1, z = 0 }, { r = 0, g = 0, b = 0, x = 0, y = -1, z = 0 } )
                                     ]
                     ]
 
                 Nothing ->
                     []
         ]
+
+
+meshWithColorizerNew :
+    Dimensions
+    -> CellGrid.RenderWebGL.CellStyle Position
+    -> List ( CellGrid.RenderWebGL.Vertex, CellGrid.RenderWebGL.Vertex, CellGrid.RenderWebGL.Vertex )
+meshWithColorizerNew size style =
+    CellGrid.initialize size (\i j -> style.toColor (Position i j))
+        |> CellGrid.RenderWebGL.meshFromCellGridHelp { cellWidth = style.cellWidth, cellHeight = style.cellHeight, toColor = identity }
