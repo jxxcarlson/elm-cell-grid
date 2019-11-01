@@ -7,8 +7,8 @@ module Main exposing (main)
 -}
 
 import Browser
-import CellGrid exposing (CellGrid)
-import CellGrid.Render exposing (CellRenderer)
+import CellGrid exposing (CellGrid, Position)
+import CellGrid.Render exposing (CellStyle, Msg)
 import Color
 import Conway exposing (State(..))
 import Element exposing (..)
@@ -196,19 +196,20 @@ update msg model =
         NewPair ( i, j ) ->
             ( { model | randomPair = ( i, j ) }, Cmd.none )
 
-        CellGrid msg_ ->
-            case msg_ of
-                CellGrid.Render.MouseClick ( i, j ) ( x, y ) ->
-                    let
-                        message =
-                            "(i,j) = (" ++ String.fromInt i ++ ", " ++ String.fromInt j ++ ")"
-                    in
-                    ( { model
-                        | message = message
-                        , cellMap = Conway.toggleState ( i, j ) model.cellMap
-                      }
-                    , Cmd.none
-                    )
+        CellGrid cellMsg ->
+            let
+                i = cellMsg.cell.row
+                j = cellMsg.cell.column
+                message =
+                    "(i,j) = (" ++ String.fromInt i ++ ", " ++ String.fromInt j ++ ")"
+            in
+            ( { model
+                | message = message
+                , cellMap = Conway.toggleState ( i, j ) model.cellMap
+              }
+            , Cmd.none
+            )
+
 
 
 generateNewLife : Model -> CellGrid State -> CellGrid State
@@ -246,7 +247,7 @@ mainColumn model =
         [ column [ centerX, spacing 20 ]
             [ title <| "Conway's Game of Life (" ++ String.fromInt gridWidth ++ ", " ++ String.fromInt gridWidth ++ ")"
             , el [ centerX ]
-                (CellGrid.Render.asHtml gridDisplayWidth gridDisplayWidth cellrenderer model.cellMap
+                (CellGrid.Render.asHtml {width = round gridDisplayWidth, height = round gridDisplayWidth} cellStyle model.cellMap
                     |> Element.html
                     |> Element.map CellGrid
                 )
@@ -295,22 +296,33 @@ roundTo places x =
     (round (k * x) |> toFloat) / k
 
 
-cellrenderer =
-    { cellSize = gridDisplayWidth / toFloat gridWidth
-    , cellColorizer =
-        \state ->
-            case state of
-                Occupied ->
-                    Color.rgb 0 0 1
+--cellrenderer1 =
+--    { cellSize = gridDisplayWidth / toFloat gridWidth
+--    , cellColorizer =
+--        \state ->
+--            case state of
+--                Occupied ->
+--                    Color.rgb 0 0 1
+--
+--                Unoccupied ->
+--                    Color.rgb 0 0 0
+--    , defaultColor = Color.rgb 0 0 0
+--    , gridLineWidth = 0.5
+--    , gridLineColor = Color.rgb 0 0 1
+--    }
 
-                Unoccupied ->
-                    Color.rgb 0 0 0
-    , defaultColor = Color.rgb 0 0 0
+cellStyle : CellStyle State
+cellStyle =
+    { toColor =
+        \b ->
+          case b of
+              Occupied -> Color.blue
+              Unoccupied -> Color.black
+    , cellWidth = 10
+    , cellHeight = 10
     , gridLineWidth = 0.5
-    , gridLineColor = Color.rgb 0 0 1
+    , gridLineColor = Color.rgb 0.4 0.4 0.4
     }
-
-
 counterDisplay : Model -> Element Msg
 counterDisplay model =
     el [ Font.size 18, width (px 30), Font.color light ] (text <| String.fromInt model.counter)
@@ -394,7 +406,7 @@ appStateAsString : AppState -> String
 appStateAsString appState =
     case appState of
         Ready ->
-            "Ready"
+            "Run"
 
         Running ->
             "Running"

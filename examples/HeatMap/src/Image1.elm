@@ -2,7 +2,7 @@ module Image1 exposing (main)
 
 import Browser
 import Browser.Events exposing (onAnimationFrameDelta)
-import CellGrid exposing (CellGrid(..), Dimensions, Position, arrayIndex)
+import CellGrid exposing (CellGrid(..), Dimensions, Position)
 import CellGrid.RenderWebGL exposing (CellStyle, Vertex, meshFromCellGrid)
 import Color exposing (Color)
 import Html exposing (Html)

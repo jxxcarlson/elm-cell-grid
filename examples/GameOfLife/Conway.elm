@@ -3,7 +3,7 @@ module Conway exposing (State(..), randomCellGrid, updateCells, spot, occupied, 
 import Array exposing (Array)
 import Random
 import Maybe.Extra
-import CellGrid exposing (CellGrid(..), cellAtMatrixIndex,  CellType(..) )
+import CellGrid exposing (CellGrid(..), Dimensions, Position,  CellType(..) )
 
 type State = Occupied | Unoccupied
 
@@ -14,27 +14,27 @@ updateCells cellGrid =
 
 randomCellGrid : Int -> Float -> ( Int, Int ) -> CellGrid State
 randomCellGrid seed density ( r, c ) =
-    CellGrid ( r, c ) (Array.fromList <| cellSequence density (r * c) seed ( 0, 1 ))
+    CellGrid {rows = r, columns = c } (Array.fromList <| cellSequence density (r * c) seed ( 0, 1 ))
 
 
 occupy :  (Int, Int) -> CellGrid State -> CellGrid State
 occupy (i, j) cg  =
-    CellGrid.setValue cg ( i, j ) Occupied
+    CellGrid.set (Position i j ) Occupied cg
 
 toggleState :  (Int, Int) -> CellGrid State -> CellGrid State
 toggleState (i, j) cg  =
-    case CellGrid.cellAtMatrixIndex (i,j) cg of
+    case CellGrid.get (Position i j) cg of
         Nothing -> cg
         Just state ->
             case state of
-                Unoccupied -> CellGrid.setValue cg ( i, j ) Occupied
-                Occupied -> CellGrid.setValue cg ( i, j ) Unoccupied
+                Unoccupied -> CellGrid.set (Position i j ) Occupied cg
+                Occupied -> CellGrid.set (Position i j ) Unoccupied cg
 
 spot : (Int, Int) -> Float -> State -> CellGrid State -> CellGrid State
 spot (centerI, centerJ) radius state cg =
     let
-        cellTransformer : (Int, Int) -> State -> State
-        cellTransformer (i, j) t =
+        cellTransformer : Int -> Int -> State -> State
+        cellTransformer i j t =
             let
                 di = toFloat <| i - centerI
                 dj = toFloat <| j - centerJ
@@ -43,7 +43,7 @@ spot (centerI, centerJ) radius state cg =
                 True -> state
                 False -> t
      in
-     CellGrid.mapWithIndex cellTransformer cg
+     CellGrid.indexedMap cellTransformer cg
 
 
 cellSequence : Float -> Int -> Int -> ( Float, Float ) -> List State
@@ -75,9 +75,9 @@ cellSequence_ n seed ( a, b ) =
     Random.step (gen n ( a, b )) seed
 
 
-nextValue : ( Int, Int ) -> CellGrid State -> State
-nextValue ( i, j ) cellGrid =
-    case cellAtMatrixIndex (i, j) cellGrid of
+nextValue : Int -> Int  -> CellGrid State -> State
+nextValue i j cellGrid =
+    case CellGrid.get  (Position i j) cellGrid of
         Nothing -> Unoccupied
         Just state ->
             let
@@ -92,8 +92,8 @@ nextValue ( i, j ) cellGrid =
 
 
 neighborFilter : CellGrid u -> ( Int, Int ) -> Bool
-neighborFilter (CellGrid (nRows, nCols) _) ( a, b ) =
-    a >= 0 && a < nRows && b >= 0 && b < nCols
+neighborFilter (CellGrid dimensions _) ( a, b ) =
+    a >= 0 && a < dimensions.rows && b >= 0 && b < dimensions.columns
 
 
 neighborIndices : CellGrid a -> (Int, Int) -> List ( Int, Int )
@@ -106,11 +106,11 @@ neighborIndices cg (row, col) =
 neighbors : CellGrid a -> (Int, Int) -> List a
 neighbors cg (row, col)  =
     neighborIndices cg (row, col)
-        |> List.map (\( r, c ) -> cellAtMatrixIndex (r, c) cg)
+        |> List.map (\( r, c ) -> CellGrid.get (Position r c) cg)
         |> Maybe.Extra.values
 
 occupied : CellGrid State  -> Int
-occupied (CellGrid (_, _) cells) =
+occupied (CellGrid _ cells) =
      cells
        |> Array.filter (\state -> state == Occupied)
        |> Array.length
