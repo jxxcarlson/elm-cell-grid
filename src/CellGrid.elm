@@ -466,8 +466,8 @@ matrixIndices (CellGrid dimensions _) =
     go maxRow maxColumn []
 
 
-{-| Initialize a cell grid. `initialize (row, column) f` creates a
-cell grid of size `(row, column)` with the element at `(i, j)` set to the result of `f (i, j)`.
+{-| Initialize a cell grid. `initialize (Dimensions row column) f` creates a
+cell grid of size `(Dimensions row column)` with the element at `(Position i j)` set to the result of `f i j`.
 
     import Array
 
