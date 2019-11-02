@@ -37,7 +37,6 @@ import CellGrid exposing (CellGrid(..), Position, matrixIndex)
 import Color exposing (Color)
 import Html
 import Html.Attributes
-import Math.Vector3 exposing (Vec3)
 import WebGL exposing (Mesh, Shader)
 
 
@@ -185,7 +184,7 @@ addRectangleFromElement style ( position, t ) accum =
 -- SHADERS
 
 
-vertexShader : Shader Vertex Uniforms { vcolor : Vec3 }
+vertexShader : Shader Vertex Uniforms { vr : Float, vg : Float, vb : Float }
 vertexShader =
     [glsl|
 
@@ -195,25 +194,33 @@ vertexShader =
         attribute float r;
         attribute float g;
         attribute float b;
-        varying vec3 vcolor;
+
+        varying float vr;
+        varying float vg;
+        varying float vb;
 
         void main () {
             gl_Position = vec4(x, y, z, 1.0);
-            vcolor = vec3(r,g,b);
+            vr = r;
+            vg = g;
+            vb = b;
         }
 
     |]
 
 
-fragmentShader : Shader {} Uniforms { vcolor : Vec3 }
+fragmentShader : Shader {} Uniforms { vr : Float, vg : Float, vb : Float }
 fragmentShader =
     [glsl|
 
         precision mediump float;
-        varying vec3 vcolor;
+
+        varying float vr;
+        varying float vg;
+        varying float vb;
 
         void main () {
-            gl_FragColor = vec4(vcolor, 1.0);
+            gl_FragColor = vec4(vr, vg, vb, 1.0);
         }
 
     |]
