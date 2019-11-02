@@ -1,4 +1,4 @@
-module Main exposing (main)
+module HeatEquation exposing (main)
 
 {- This is a starter app which presents a text label, text field, and a button.
    What you enter in the text field is echoed in the label.  When you press the
