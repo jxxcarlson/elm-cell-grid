@@ -18,13 +18,6 @@ main =
 
 config = {dim = 100, size = 700}
 
-cellStyle : CellStyle Color
-cellStyle =
-    { toColor = identity
-    , cellWidth = 0.1
-    , cellHeight = 0.1
-    }
-
 
 view : Html msg
 view  =
@@ -48,19 +41,21 @@ grid dimensions =
 temperatureAtIndex : Dimensions -> Position -> Float
 temperatureAtIndex dimensions position =
     let
-        iRatio =
+        -- a number in [0,1]
+        x =
             toFloat position.row / toFloat dimensions.rows
 
-        jRatio =
+        -- a number in [0,1]
+        y =
             toFloat position.column / toFloat dimensions.columns
 
         pi =
             3.1416
 
         s1 =
-            sin (8.7 * pi * iRatio)
+            sin (8.7 * pi * x)
 
         s2 =
-            sin (4.1 * pi * jRatio)
+            sin (4.1 * pi * y)
     in
     0.5 + 0.5 * s1 * s2
