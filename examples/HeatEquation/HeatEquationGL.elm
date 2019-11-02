@@ -21,7 +21,7 @@ import Time exposing (Posix)
 
 
 config = {
-     gridWidth = 150
+     gridWidth = 100
    , gridDisplayWidth = 500
    , initialSeed = 3771
    , tickInterval = 30}

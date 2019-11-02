@@ -16,9 +16,8 @@ import CellGrid exposing (CellGrid(..), Position)
 import Color exposing (Color)
 import Html exposing (Html)
 import Html.Events.Extra.Mouse as Mouse
-import Svg exposing (Svg)
-import Svg.Attributes
-import Svg.Lazy
+-- import Svg exposing (Svg)
+-- import Svg.Attributes
 
 
 
