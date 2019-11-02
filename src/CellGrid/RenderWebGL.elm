@@ -8,6 +8,7 @@ module CellGrid.RenderWebGL exposing
     )
 
 {-| Render a `CellGrid` using WebGL. WebGL is typically faster for a large (1000+) cell grids.
+See also the [examples](https://github.com/jxxcarlson/elm-cell-grid/tree/master/examples).
 
 
 ## Rendering functions
@@ -36,7 +37,6 @@ import CellGrid exposing (CellGrid(..), Position, matrixIndex)
 import Color exposing (Color)
 import Html
 import Html.Attributes
-import Math.Vector3 exposing (Vec3)
 import WebGL exposing (Mesh, Shader)
 
 
@@ -52,8 +52,8 @@ asHtml ({ width, height } as canvas) toColor ((CellGrid { rows, columns } _) as 
         style : CellStyle a
         style =
             { toColor = toColor
-            , cellWidth = toFloat width / toFloat (250 * rows)
-            , cellHeight = toFloat height / toFloat (250 * columns)
+            , cellWidth = toFloat width / toFloat (250 * columns)
+            , cellHeight = toFloat height / toFloat (250 * rows)
             }
 
         mesh : Mesh Vertex
@@ -65,7 +65,6 @@ asHtml ({ width, height } as canvas) toColor ((CellGrid { rows, columns } _) as 
 
 
 -- LOWLEVEL HTML
-
 
 
 {-| Style an individual cell
@@ -136,7 +135,6 @@ meshFromCellGrid style cellGrid =
         |> WebGL.triangles
 
 
-
 {-| -}
 meshFromCellGridHelp : CellStyle a -> CellGrid a -> List ( Vertex, Vertex, Vertex )
 meshFromCellGridHelp style (CellGrid { rows, columns } array) =
@@ -159,10 +157,10 @@ addRectangleFromElement :
 addRectangleFromElement style ( position, t ) accum =
     let
         x =
-            -1.0 + toFloat position.row * style.cellWidth
+            -1.0 + toFloat position.column * style.cellWidth
 
         y =
-            1.0 - toFloat position.column * style.cellHeight
+            1.0 - toFloat position.row * style.cellHeight
 
         color =
             Color.toRgba (style.toColor t)
@@ -186,7 +184,7 @@ addRectangleFromElement style ( position, t ) accum =
 -- SHADERS
 
 
-vertexShader : Shader Vertex Uniforms { vcolor : Vec3 }
+vertexShader : Shader Vertex Uniforms { vr : Float, vg : Float, vb : Float }
 vertexShader =
     [glsl|
 
@@ -196,25 +194,33 @@ vertexShader =
         attribute float r;
         attribute float g;
         attribute float b;
-        varying vec3 vcolor;
+
+        varying float vr;
+        varying float vg;
+        varying float vb;
 
         void main () {
             gl_Position = vec4(x, y, z, 1.0);
-            vcolor = vec3(r,g,b);
+            vr = r;
+            vg = g;
+            vb = b;
         }
 
     |]
 
 
-fragmentShader : Shader {} Uniforms { vcolor : Vec3 }
+fragmentShader : Shader {} Uniforms { vr : Float, vg : Float, vb : Float }
 fragmentShader =
     [glsl|
 
         precision mediump float;
-        varying vec3 vcolor;
+
+        varying float vr;
+        varying float vg;
+        varying float vb;
 
         void main () {
-            gl_FragColor = vec4(vcolor, 1.0);
+            gl_FragColor = vec4(vr, vg, vb, 1.0);
         }
 
     |]

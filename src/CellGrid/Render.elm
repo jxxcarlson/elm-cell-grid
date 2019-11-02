@@ -16,11 +16,20 @@ import CellGrid exposing (CellGrid(..), Position)
 import Color exposing (Color)
 import Html exposing (Html)
 import Html.Events.Extra.Mouse as Mouse
-import TypedSvg exposing (g, rect, svg)
-import TypedSvg.Attributes exposing (fill, stroke, viewBox)
-import TypedSvg.Attributes.InPx exposing (height, strokeWidth, width, x, y)
-import TypedSvg.Core exposing (Svg)
-import TypedSvg.Types exposing (Fill(..))
+import Svg exposing (Svg)
+import Svg.Attributes
+import Svg.Lazy
+
+
+
+{-
+   import Svg exposing (g, rect, svg)
+   import Svg.Attributes exposing (fill, stroke, viewBox)
+   import TypedSvg.Attributes.InPx exposing (height, strokeWidth, width, x, y)
+   import TypedSvg.Core exposing (Svg)
+   import TypedSvg.Types exposing (Fill(..))
+
+-}
 
 
 {-| Customize how a cell is rendered.
@@ -66,10 +75,10 @@ type alias Msg =
 -}
 asHtml : { width : Int, height : Int } -> CellStyle a -> CellGrid a -> Html Msg
 asHtml { width, height } cr cellGrid =
-    TypedSvg.svg
-        [ TypedSvg.Attributes.InPx.height (toFloat height)
-        , TypedSvg.Attributes.InPx.width (toFloat width)
-        , TypedSvg.Attributes.viewBox 0 0 (toFloat width) (toFloat height)
+    Svg.svg
+        [ Svg.Attributes.height (String.fromInt height)
+        , Svg.Attributes.width (String.fromInt width)
+        , Svg.Attributes.viewBox ("0 0 " ++ String.fromInt width ++ " " ++ String.fromInt height)
         ]
         [ asSvg cr cellGrid ]
 
@@ -83,17 +92,19 @@ asSvg style cellGrid =
             CellGrid.indexedMap (\i j -> renderCell style (Position i j)) cellGrid
                 |> CellGrid.foldr (::) []
     in
-    TypedSvg.g [] elements
+    Svg.g [] elements
 
 
 renderCell : CellStyle a -> Position -> a -> Svg Msg
 renderCell style position value =
-    TypedSvg.rect
-        [ width style.cellWidth
-        , height style.cellHeight
-        , x <| style.cellWidth * toFloat position.row
-        , y <| style.cellHeight * toFloat position.column
-        , fill (Fill (style.toColor value))
+    Svg.rect
+        [ Svg.Attributes.width (String.fromFloat style.cellWidth)
+        , Svg.Attributes.height (String.fromFloat style.cellHeight)
+        , Svg.Attributes.x (String.fromFloat (style.cellWidth * toFloat position.column))
+        , Svg.Attributes.y (String.fromFloat (style.cellHeight * toFloat position.row))
+        , Svg.Attributes.strokeWidth (String.fromFloat style.gridLineWidth)
+        , Svg.Attributes.fill (toCssString (style.toColor value))
+        , Svg.Attributes.stroke (toCssString style.gridLineColor)
         , Mouse.onDown
             (\r ->
                 let
@@ -102,7 +113,45 @@ renderCell style position value =
                 in
                 { cell = position, coordinates = { x = x, y = y } }
             )
-        , strokeWidth style.gridLineWidth
-        , stroke style.gridLineColor
         ]
         []
+
+
+{-| Use a faster toCssString
+
+Using `++` instead of `String.concat` which avh4/color uses makes this much faster.
+
+-}
+toCssString : Color -> String
+toCssString color =
+    let
+        rgba =
+            Color.toRgba color
+
+        r =
+            rgba.red
+
+        g =
+            rgba.green
+
+        b =
+            rgba.blue
+
+        a =
+            rgba.alpha
+
+        pct x =
+            ((x * 10000) |> round |> toFloat) / 100
+
+        roundTo x =
+            ((x * 1000) |> round |> toFloat) / 1000
+    in
+    "rgba("
+        ++ String.fromFloat (pct r)
+        ++ "%,"
+        ++ String.fromFloat (pct g)
+        ++ "%,"
+        ++ String.fromFloat (pct b)
+        ++ "%,"
+        ++ String.fromFloat (roundTo a)
+        ++ ")"
