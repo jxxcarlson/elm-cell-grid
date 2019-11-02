@@ -9,23 +9,13 @@ import Html exposing (Html)
 import WebGL exposing (Mesh)
 
 
-main : Program () Float Float
+main : Html msg
 main =
-    Browser.element
-        { init = \_ -> ( 0, Cmd.none )
-        , view = view
-        , subscriptions = \_ -> onAnimationFrameDelta Basics.identity
-        , update = \elapsed currentTime -> ( elapsed + currentTime, Cmd.none )
-        }
-
-
-view : Float -> Html msg
-view t =
     CellGrid.RenderWebGL.meshToHtml { width = 1200, height = 1200 } mesh
 
 
-cg : CellGrid Color
-cg =
+grid : CellGrid Color
+grid =
     let
         dimensions : Dimensions
         dimensions =
@@ -48,7 +38,7 @@ cellStyle =
 
 mesh : Mesh Vertex
 mesh =
-    meshFromCellGrid cellStyle cg
+    meshFromCellGrid cellStyle grid
 
 
 colorAtMatrixIndex : Dimensions -> Position -> Color

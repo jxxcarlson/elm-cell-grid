@@ -15,14 +15,9 @@ userScale =
     1.0
 
 
-main : Program () Float Float
+main : Html msg
 main =
-    Browser.element
-        { init = \_ -> ( 0, Cmd.none )
-        , view = \model -> Html.Lazy.lazy2 view userScale model
-        , subscriptions = \_ -> onAnimationFrameDelta Basics.identity
-        , update = \elapsed currentTime -> ( elapsed + currentTime, Cmd.none )
-        }
+    view userScale
 
 
 cellStyle : CellStyle Color
@@ -33,8 +28,8 @@ cellStyle =
     }
 
 
-view : Float -> Float -> Html msg
-view scale t =
+view : Float -> Html msg
+view scale =
     let
         w =
             round (700 * scale)
@@ -47,7 +42,7 @@ view scale t =
 
 temperatureToColor : Float -> Color
 temperatureToColor t =
-    Color.rgb t 0 (1 - 0.1*t)
+    Color.rgb t 0 (1 - 0.1 * t)
 
 
 grid : Dimensions -> CellGrid Float
