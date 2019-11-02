@@ -11,14 +11,12 @@ import Html.Lazy
 import WebGL exposing (Mesh)
 
 
-userScale =
-    1.0
-
-
 main : Html msg
 main =
-    view userScale
+    view
 
+
+config = {dim = 100, size = 700}
 
 cellStyle : CellStyle Color
 cellStyle =
@@ -28,16 +26,9 @@ cellStyle =
     }
 
 
-view : Float -> Html msg
-view scale =
-    let
-        w =
-            round (700 * scale)
-
-        g =
-            round (100 * scale)
-    in
-    CellGrid.RenderWebGL.asHtml { width = w, height = w } temperatureToColor (grid (Dimensions g g))
+view : Html msg
+view  =
+     CellGrid.RenderWebGL.asHtml { width = config.size, height = config.size } temperatureToColor (grid (Dimensions config.dim config.dim))
 
 
 temperatureToColor : Float -> Color
