@@ -20,21 +20,15 @@ import TemperatureField
 import Time exposing (Posix)
 
 
-tickInterval : Float
-tickInterval =
-    20
+config = {
+     gridWidth = 150
+   , gridDisplayWidth = 500
+   , initialSeed = 3771
+   , tickInterval = 30}
 
 
-initialSeed =
-    3771
 
 
-gridWidth =
-    100
-
-
-gridDisplayWidth =
-    500.0
 
 
 main =
@@ -98,7 +92,7 @@ initialTemperatureField : CellGrid Float
 initialTemperatureField =
     let
         w =
-            toFloat gridWidth
+            toFloat config.gridWidth
 
         c1 =
             floor <| 0.6 * w
@@ -112,14 +106,14 @@ initialTemperatureField =
         r2 =
             0.1 * w
     in
-    TemperatureField.randomHeatMap  {rows = gridWidth, columns = gridWidth}
+    TemperatureField.randomHeatMap  {rows = config.gridWidth, columns = config.gridWidth}
         |> TemperatureField.spot ( c1, c1 ) r1 1.0
         |> TemperatureField.spot ( c2, c2 ) r1 0.0
         |> TemperatureField.spot ( c2, c2 ) r2 1.0
 
 
 subscriptions model =
-    Time.every tickInterval Tick
+    Time.every config.tickInterval Tick
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -182,7 +176,7 @@ mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
             [ title "Diffusion of Heat"
-            , el [] (CellGrid.RenderWebGL.asHtml {width = 500, height = 500} model.heatMap colorMap |> Element.html)
+            , el [] (CellGrid.RenderWebGL.asHtml {width = config.gridDisplayWidth, height = config.gridDisplayWidth} colorMap model.heatMap  |> Element.html)
             , row [ spacing 18 ]
                 [ resetButton
                 , runButton model
@@ -198,9 +192,9 @@ mainColumn model =
         ]
 
 
-colorMap : Float -> Vec3
+colorMap : Float -> Color.Color
 colorMap t =
-    vec3 t 0 0
+    Color.rgb t 0 0
 
 
 gray g =
@@ -280,7 +274,7 @@ appStateAsString : AppState -> String
 appStateAsString appState =
     case appState of
         Ready ->
-            "Ready"
+            "Run"
 
         Running ->
             "Running"
