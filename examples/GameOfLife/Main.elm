@@ -7,7 +7,7 @@ module Main exposing (main)
 -}
 
 import Browser
-import CellGrid exposing (CellGrid, Position)
+import CellGrid exposing (CellGrid, Dimensions, Position)
 import CellGrid.Render exposing (CellStyle, Msg)
 import Color
 import Conway exposing (State(..))
@@ -66,7 +66,7 @@ type alias Model =
     , currentDensity : Float
     , seed : Int
     , seedString : String
-    , randomPair : ( Int, Int )
+    , randomPosition : Position
     , cellMap : CellGrid State
     , message : String
     }
@@ -92,7 +92,7 @@ type Msg
     | Tick Posix
     | AdvanceAppState
     | Reset
-    | NewPair ( Int, Int )
+    | NewPosition Position
     | CellGrid CellGrid.Render.Msg
 
 
@@ -112,7 +112,7 @@ init flags =
       , currentDensity = initialDensity
       , seed = initialSeed
       , seedString = String.fromInt initialSeed
-      , randomPair = ( 0, 0 )
+      , randomPosition = Position 0 0
       , cellMap = initialCellGrid initialSeed initialDensity
       , message = "Click to make cell."
       }
@@ -122,7 +122,7 @@ init flags =
 
 initialCellGrid : Int -> Float -> CellGrid State
 initialCellGrid seed density =
-    Conway.randomCellGrid seed density ( gridWidth, gridWidth )
+    Conway.new seed density (Dimensions gridWidth gridWidth)
 
 
 subscriptions model =
@@ -152,17 +152,17 @@ update msg model =
                     ( { model | seedString = str, seed = seed_ }, Cmd.none )
 
         Step ->
-            ( { model | counter = model.counter + 1, cellMap = Conway.updateCells model.cellMap }, Cmd.none )
+            ( { model | counter = model.counter + 1, cellMap = Conway.step model.cellMap }, Cmd.none )
 
         Tick t ->
             case model.appState == Running of
                 True ->
                     ( { model
                         | counter = model.counter + 1
-                        , cellMap = Conway.updateCells model.cellMap |> generateNewLife model
+                        , cellMap = Conway.step model.cellMap |> generateNewLife model
                         , currentDensity = currentDensity model
                       }
-                    , Random.generate NewPair generatePair
+                    , Random.generate NewPosition generatePosition
                     )
 
                 False ->
@@ -193,23 +193,26 @@ update msg model =
             , Cmd.none
             )
 
-        NewPair ( i, j ) ->
-            ( { model | randomPair = ( i, j ) }, Cmd.none )
+        NewPosition position ->
+            ( { model | randomPosition = position }, Cmd.none )
 
         CellGrid cellMsg ->
             let
-                i = cellMsg.cell.row
-                j = cellMsg.cell.column
+                i =
+                    cellMsg.cell.row
+
+                j =
+                    cellMsg.cell.column
+
                 message =
                     "(i,j) = (" ++ String.fromInt i ++ ", " ++ String.fromInt j ++ ")"
             in
             ( { model
                 | message = message
-                , cellMap = Conway.toggleState ( i, j ) model.cellMap
+                , cellMap = Conway.toggleStateAt (Position i j) model.cellMap
               }
             , Cmd.none
             )
-
 
 
 generateNewLife : Model -> CellGrid State -> CellGrid State
@@ -219,15 +222,12 @@ generateNewLife model cg =
             cg
 
         True ->
-            let
-                ( i, j ) =
-                    model.randomPair
-            in
-            Conway.occupy ( i, j ) cg
+            Conway.occupy model.randomPosition cg
 
 
-generatePair =
-    Random.pair (Random.int 0 (gridWidth - 1)) (Random.int 0 (gridWidth - 1))
+generatePosition : Random.Generator Position
+generatePosition =
+    Random.map2 Position (Random.int 0 (gridWidth - 1)) (Random.int 0 (gridWidth - 1))
 
 
 
@@ -247,7 +247,7 @@ mainColumn model =
         [ column [ centerX, spacing 20 ]
             [ title <| "Conway's Game of Life (" ++ String.fromInt gridWidth ++ ", " ++ String.fromInt gridWidth ++ ")"
             , el [ centerX ]
-                (CellGrid.Render.asHtml {width = round gridDisplayWidth, height = round gridDisplayWidth} cellStyle model.cellMap
+                (CellGrid.Render.asHtml { width = round gridDisplayWidth, height = round gridDisplayWidth } cellStyle model.cellMap
                     |> Element.html
                     |> Element.map CellGrid
                 )
@@ -296,6 +296,7 @@ roundTo places x =
     (round (k * x) |> toFloat) / k
 
 
+
 --cellrenderer1 =
 --    { cellSize = gridDisplayWidth / toFloat gridWidth
 --    , cellColorizer =
@@ -311,18 +312,24 @@ roundTo places x =
 --    , gridLineColor = Color.rgb 0 0 1
 --    }
 
+
 cellStyle : CellStyle State
 cellStyle =
     { toColor =
         \b ->
-          case b of
-              Occupied -> Color.blue
-              Unoccupied -> Color.black
+            case b of
+                Occupied ->
+                    Color.blue
+
+                Unoccupied ->
+                    Color.black
     , cellWidth = 10
     , cellHeight = 10
     , gridLineWidth = 0.5
     , gridLineColor = Color.rgb 0.4 0.4 0.4
     }
+
+
 counterDisplay : Model -> Element Msg
 counterDisplay model =
     el [ Font.size 18, width (px 30), Font.color light ] (text <| String.fromInt model.counter)
