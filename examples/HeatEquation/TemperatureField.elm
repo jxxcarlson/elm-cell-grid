@@ -2,7 +2,7 @@ module TemperatureField exposing (randomHeatMap, updateCells, spot)
 
 import Array exposing (Array)
 import Random
-import CellGrid exposing (CellGrid(..), cellAtMatrixIndex, classifyCell, CellType(..))
+import CellGrid exposing (CellGrid(..), Dimensions, classifyCell, CellType(..), Position)
 
 
 updateCells : Float -> CellGrid Float -> CellGrid Float
@@ -10,23 +10,25 @@ updateCells beta temperatureField =
     CellGrid.transform (nextCellValue beta) temperatureField
 
 
-averageAt : CellGrid Float -> ( Int, Int ) -> Float
-averageAt temperatureField ( i, j ) =
+averageAt :  Position -> CellGrid Float -> Float
+averageAt  position temperatureField =
     let
+        i = position.row
+        j = position.column
         east =
-            cellAtMatrixIndex ( i - 1, j ) temperatureField |> Maybe.withDefault 0
+            CellGrid.get (Position (i - 1) j ) temperatureField |> Maybe.withDefault 0
 
         west =
-            cellAtMatrixIndex ( i + 1, j ) temperatureField |> Maybe.withDefault 0
+            CellGrid.get ( Position (i + 1) j ) temperatureField |> Maybe.withDefault 0
 
         north =
-            cellAtMatrixIndex ( i, j + 1 ) temperatureField |> Maybe.withDefault 0
+            CellGrid.get (Position i (j + 1) ) temperatureField |> Maybe.withDefault 0
 
         south =
-            cellAtMatrixIndex ( i, j - 1 ) temperatureField |> Maybe.withDefault 0
+            CellGrid.get ( Position i (j - 1) ) temperatureField |> Maybe.withDefault 0
 
         denominator =
-            case classifyCell temperatureField ( i, j ) of
+            case classifyCell position temperatureField  of
                 Interior ->
                     4
 
@@ -38,16 +40,16 @@ averageAt temperatureField ( i, j ) =
         (east + west + north + south) / denominator
 
 
-randomHeatMap : ( Int, Int ) -> CellGrid Float
-randomHeatMap ( r, c ) =
-    CellGrid ( r, c ) (Array.fromList <| floatSequence (r * c) 0 ( 0, 1 ))
+randomHeatMap : Dimensions -> CellGrid Float
+randomHeatMap dimensions =
+    CellGrid dimensions (Array.fromList <| floatSequence (dimensions.rows * dimensions.columns) 0 ( 0, 1 ))
 
 
 spot : (Int, Int) -> Float -> Float -> CellGrid Float -> CellGrid Float
 spot (centerI, centerJ) radius temperature temperatureField =
     let
-        cellTransformer : (Int, Int) -> Float -> Float
-        cellTransformer (i, j) t =
+        cellTransformer : Int -> Int -> Float -> Float
+        cellTransformer i j t =
             let
                 di = toFloat <| i - centerI
                 dj = toFloat <| j - centerJ
@@ -56,7 +58,7 @@ spot (centerI, centerJ) radius temperature temperatureField =
                 True -> temperature
                 False -> t
      in
-     CellGrid.mapWithIndex cellTransformer temperatureField
+     CellGrid.indexedMap cellTransformer temperatureField
 
 
 floatSequence : Int -> Int -> ( Float, Float ) -> List Float
@@ -81,16 +83,16 @@ floatSequence_ n seed ( a, b ) =
 
 
 
-nextCellValue : Float -> ( Int, Int ) -> CellGrid Float -> Float
-nextCellValue beta ( i, j ) temperatureField =
+nextCellValue : Float ->  Int -> Int  -> CellGrid Float -> Float
+nextCellValue beta i  j temperatureField =
     let
         currentCellValue =
-            cellAtMatrixIndex ( i, j ) temperatureField |> Maybe.withDefault 0
+            CellGrid.get (Position i j ) temperatureField   |> Maybe.withDefault 0
     in
-        case classifyCell temperatureField ( i, j ) == Interior of
+        case classifyCell (Position i j ) temperatureField == Interior of
             False ->
                 currentCellValue
 
             True ->
-                (1 - beta) * currentCellValue + beta * (averageAt temperatureField ( i, j ))
+                (1 - beta) * currentCellValue + beta * (averageAt (Position i j ) temperatureField)
 

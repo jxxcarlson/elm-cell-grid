@@ -112,7 +112,7 @@ initialTemperatureField =
         r2 =
             0.1 * w
     in
-    TemperatureField.randomHeatMap ( gridWidth, gridWidth )
+    TemperatureField.randomHeatMap  {rows = gridWidth, columns = gridWidth}
         |> TemperatureField.spot ( c1, c1 ) r1 1.0
         |> TemperatureField.spot ( c2, c2 ) r1 0.0
         |> TemperatureField.spot ( c2, c2 ) r2 1.0
@@ -182,7 +182,7 @@ mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
             [ title "Diffusion of Heat"
-            , el [] (CellGrid.RenderWebGL.asHtml 500 500 model.heatMap colorMap |> Element.html)
+            , el [] (CellGrid.RenderWebGL.asHtml {width = 500, height = 500} model.heatMap colorMap |> Element.html)
             , row [ spacing 18 ]
                 [ resetButton
                 , runButton model
