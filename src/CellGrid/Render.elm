@@ -16,19 +16,8 @@ import CellGrid exposing (CellGrid(..), Position)
 import Color exposing (Color)
 import Html exposing (Html)
 import Html.Events.Extra.Mouse as Mouse
--- import Svg exposing (Svg)
--- import Svg.Attributes
-
-
-
-{-
-   import Svg exposing (g, rect, svg)
-   import Svg.Attributes exposing (fill, stroke, viewBox)
-   import TypedSvg.Attributes.InPx exposing (height, strokeWidth, width, x, y)
-   import TypedSvg.Core exposing (Svg)
-   import TypedSvg.Types exposing (Fill(..))
-
--}
+import Svg exposing (Svg)
+import Svg.Attributes
 
 
 {-| Customize how a cell is rendered.
