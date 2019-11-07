@@ -486,26 +486,17 @@ cell grid of size `(Dimensions row column)` with the element at `(Position i j)`
 initialize : Dimensions -> (Int -> Int -> a) -> CellGrid a
 initialize dimensions temperatureMap =
     let
-        maxRow =
-            dimensions.rows - 1
+        helper index =
+            let
+                row =
+                    index // dimensions.columns
 
-        maxColumn =
-            dimensions.columns - 1
-
-        go row column accum =
-            if row > maxRow then
-                -- row is outside of range: stop
-                accum
-
-            else if column == maxColumn then
-                -- last column of the row: increment row, reset column
-                go (row + 1) 0 (Array.push (temperatureMap row column) accum)
-
-            else
-                -- somewhere in the interior: increment column
-                go row (column + 1) (Array.push (temperatureMap row column) accum)
+                column =
+                    remainderBy dimensions.columns index
+            in
+            temperatureMap row column
     in
-    CellGrid dimensions (go 0 0 Array.empty)
+    CellGrid dimensions (Array.initialize (dimensions.rows * dimensions.columns) helper)
 
 
 {-| Fill a cell grid with a constant value

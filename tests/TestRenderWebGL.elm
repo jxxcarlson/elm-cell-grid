@@ -5,7 +5,6 @@ import CellGrid.RenderWebGL
 import Color exposing (Color)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
-import Math.Vector3 as Vec3
 import Test exposing (..)
 import WebGL exposing (Mesh)
 

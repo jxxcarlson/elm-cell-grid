@@ -7,8 +7,11 @@ module CellGrid.RenderWebGL exposing
     , meshFromCellGridHelp
     )
 
-{-| Render a `CellGrid` using WebGL. WebGL is typically faster for a large (1000+) cell grids.
+{-| Render a `CellGrid` using WebGL.
 See also the [examples](https://github.com/jxxcarlson/elm-cell-grid/tree/master/examples).
+
+> **Note:** WebGL can only handle grids of about `100x100`.
+> Drawing more cells exceeds the vertex limit, resulting in a partially blank image. `CellGrid.Image` can handle larger grids with ease.
 
 
 ## Rendering functions
@@ -48,12 +51,15 @@ The cells are stretched to use up all available space. For customized cell sizes
 asHtml : { width : Int, height : Int } -> (a -> Color) -> CellGrid a -> Html.Html msg
 asHtml ({ width, height } as canvas) toColor ((CellGrid { rows, columns } _) as cellGrid) =
     let
-        -- why 250?
         style : CellStyle a
         style =
             { toColor = toColor
-            , cellWidth = toFloat width / toFloat (250 * columns)
-            , cellHeight = toFloat height / toFloat (250 * rows)
+            , cellWidth =
+                0.1
+                    / (toFloat width / toFloat columns)
+            , cellHeight =
+                0.1
+                    / (toFloat height / toFloat rows)
             }
 
         mesh : Mesh Vertex
