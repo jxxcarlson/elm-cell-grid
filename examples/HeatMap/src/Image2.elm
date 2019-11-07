@@ -53,9 +53,9 @@ temperatureAtIndex dimensions position =
             3.1416
 
         s1 =
-            sin (8.7 * pi * x)
+             sin (3.7 * pi * x)
 
         s2 =
-            sin (4.1 * pi * y)
+             sin (3.7 * pi * y)
     in
     0.5 + 0.5 * s1 * s2

@@ -43,20 +43,22 @@ grid =
 colorAtMatrixIndex : Dimensions -> Position -> Color
 colorAtMatrixIndex dimensions position =
     let
-        iRatio =
+        -- a number in [0,1]
+        x =
             toFloat position.row / toFloat dimensions.rows
 
-        jRatio =
+        -- another number in [0,1]
+        y =
             toFloat position.column / toFloat dimensions.columns
 
         pi =
             3.1416
 
         s1 =
-            sin (2.7 * pi * iRatio)
+            sin (3.7 * pi * x)
 
         s2 =
-            sin (4.1 * pi * jRatio)
+            sin (3.7 * pi * y)
     in
-    Color.rgb (0.5 + 0.3 * s1) 0.0 (0.5 + 0.5 * s2)
+    Color.rgb (0.2 + 0.2 * s1*s2) 0.0 (0.5 + 0.5 * s1*s2)
 
