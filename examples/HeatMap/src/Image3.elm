@@ -1,15 +1,29 @@
-module Image1 exposing (main)
+module Image3 exposing (main)
+
+{-| Render a cellgrid as a bmp image and display it using HTML
+-}
 
 import CellGrid exposing (CellGrid(..), Dimensions, Position)
-import CellGrid.RenderWebGL exposing (CellStyle, Vertex, meshFromCellGrid)
+import CellGrid.Image
 import Color exposing (Color)
 import Html exposing (Html)
-import WebGL exposing (Mesh)
+import Html.Attributes
+
+
+size : Int
+size =
+    100
 
 
 main : Html msg
 main =
-    CellGrid.RenderWebGL.meshToHtml { width = 1200, height = 1200 } mesh
+    Html.img
+        [ Html.Attributes.src (CellGrid.Image.asBmpUri grid)
+        , Html.Attributes.width 600
+        , Html.Attributes.height 600
+        , Html.Attributes.style "image-rendering" "pixelated"
+        ]
+        []
 
 
 grid : CellGrid Color
@@ -17,26 +31,13 @@ grid =
     let
         dimensions : Dimensions
         dimensions =
-            Dimensions 100 100
+            Dimensions size size
 
         initializer : Int -> Int -> Color
         initializer i j =
             colorAtMatrixIndex dimensions (Position i j)
     in
     CellGrid.initialize dimensions initializer
-
-
-cellStyle : CellStyle Color
-cellStyle =
-    { toColor = identity
-    , cellWidth = 0.01
-    , cellHeight = 0.01
-    }
-
-
-mesh : Mesh Vertex
-mesh =
-    meshFromCellGrid cellStyle grid
 
 
 colorAtMatrixIndex : Dimensions -> Position -> Color
@@ -58,3 +59,4 @@ colorAtMatrixIndex dimensions position =
             sin (4.1 * pi * jRatio)
     in
     Color.rgb (0.5 + 0.3 * s1) 0.0 (0.5 + 0.5 * s2)
+
