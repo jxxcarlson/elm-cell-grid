@@ -48,12 +48,15 @@ The cells are stretched to use up all available space. For customized cell sizes
 asHtml : { width : Int, height : Int } -> (a -> Color) -> CellGrid a -> Html.Html msg
 asHtml ({ width, height } as canvas) toColor ((CellGrid { rows, columns } _) as cellGrid) =
     let
-        -- why 250?
         style : CellStyle a
         style =
             { toColor = toColor
-            , cellWidth = toFloat width / toFloat (250 * columns)
-            , cellHeight = toFloat height / toFloat (250 * rows)
+            , cellWidth =
+                0.1
+                    / (toFloat width / toFloat columns)
+            , cellHeight =
+                0.1
+                    / (toFloat height / toFloat rows)
             }
 
         mesh : Mesh Vertex
