@@ -7,8 +7,11 @@ module CellGrid.RenderWebGL exposing
     , meshFromCellGridHelp
     )
 
-{-| Render a `CellGrid` using WebGL. WebGL is typically faster for a large (1000+) cell grids.
+{-| Render a `CellGrid` using WebGL.
 See also the [examples](https://github.com/jxxcarlson/elm-cell-grid/tree/master/examples).
+
+> **Note:** WebGL can only handle grids of about `100x100`.
+> Drawing more cells exceeds the vertex limit, resulting in a partially blank image. `CellGrid.Image` can handle larger grids with ease.
 
 
 ## Rendering functions
