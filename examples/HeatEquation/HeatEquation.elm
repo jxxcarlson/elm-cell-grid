@@ -7,8 +7,8 @@ module HeatEquation exposing (main)
 -}
 
 import Browser
-import CellGrid exposing (CellGrid(..))
-import CellGrid.Render exposing (CellRenderer)
+import CellGrid exposing (CellGrid(..), Dimensions, Position)
+import CellGrid.Render exposing (CellStyle)
 import Color exposing (Color)
 import Element exposing (..)
 import Element.Background as Background
@@ -19,21 +19,17 @@ import TemperatureField
 import Time exposing (Posix)
 
 
-tickInterval : Float
-tickInterval =
-    333
+type alias Config = {
+        tickInterval : Float
+      , gridWidth : Int
+  }
+
+config = {
+     tickInterval = 333
+   , gridWidth = 70
+  }
 
 
-initialSeed =
-    3771
-
-
-gridWidth =
-    70
-
-
-gridDisplayWidth =
-    500.0
 
 
 main =
@@ -73,8 +69,6 @@ type Msg
 
 
 
--- | CellGrid CellGrid.Msg
-
 
 type alias Flags =
     {}
@@ -98,7 +92,7 @@ initialTemperatureField : CellGrid Float
 initialTemperatureField =
     let
         w =
-            toFloat gridWidth
+            toFloat config.gridWidth
 
         c1 =
             floor <| 0.6 * w
@@ -112,14 +106,14 @@ initialTemperatureField =
         r2 =
             0.1 * w
     in
-    TemperatureField.randomHeatMap ( gridWidth, gridWidth )
+    TemperatureField.randomHeatMap ( Dimensions config.gridWidth config.gridWidth )
         |> TemperatureField.spot ( c1, c1 ) r1 1.0
         |> TemperatureField.spot ( c2, c2 ) r1 0.0
         |> TemperatureField.spot ( c2, c2 ) r2 1.0
 
 
 subscriptions model =
-    Time.every tickInterval Tick
+    Time.every config.tickInterval Tick
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -165,25 +159,28 @@ update msg model =
         Reset ->
             ( { model | counter = 0, appState = Ready, heatMap = initialTemperatureField }, Cmd.none )
 
-        CellGrid msg_ ->
-            case msg_ of
-                CellGrid.Render.MouseClick ( i, j ) ( x, y ) ->
+        CellGrid cellMsg ->
                     let
+                        i =
+                            cellMsg.cell.row
+
+                        j =
+                            cellMsg.cell.column
                         message =
                             "(i,j) = (" ++ String.fromInt i ++ ", " ++ String.fromInt j ++ ")"
 
                         newHeatMap =
-                            case CellGrid.cellAtMatrixIndex ( i, j ) model.heatMap of
+                            case CellGrid.get (Position i j ) model.heatMap of
                                 Nothing ->
                                     model.heatMap
 
                                 Just t ->
                                     case t < 0.5 of
                                         True ->
-                                            CellGrid.setValue model.heatMap ( i, j ) 1.0
+                                            CellGrid.set  (Position i j ) 1.0 model.heatMap
 
                                         False ->
-                                            CellGrid.setValue model.heatMap ( i, j ) 0.0
+                                            CellGrid.set  (Position i j ) 0.0 model.heatMap
                     in
                     ( { model | heatMap = newHeatMap }, Cmd.none )
 
@@ -204,7 +201,7 @@ mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
             [ title "Diffusion of Heat"
-            , el [] (CellGrid.Render.asHtml 400 400 cellrenderer model.heatMap |> Element.html |> Element.map CellGrid)
+            , el [] (CellGrid.Render.asHtml {width = 400, height = 400} cellStyle model.heatMap |> Element.html |> Element.map CellGrid)
             , row [ spacing 18 ]
                 [ resetButton
                 , runButton model
@@ -224,11 +221,12 @@ gray g =
     Element.rgb g g g
 
 
-cellrenderer : CellRenderer Float
-cellrenderer =
-    { cellSize = gridDisplayWidth / toFloat gridWidth
-    , cellColorizer = \z -> Color.rgb z 0 0
-    , defaultColor = Color.rgb 0 0 0
+
+cellStyle : CellStyle Float
+cellStyle =
+    { toColor = \z -> Color.rgb z 0 0
+    , cellWidth = 10
+     , cellHeight = 10
     , gridLineColor = Color.rgb 180 0 0
     , gridLineWidth = 0.5
     }
