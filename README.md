@@ -60,7 +60,7 @@ to see how this message is used to respond to user clicks.
 In the example below, we create a 2x2 `CellGrid Float`.
 
 
-````bash
+```bash
 > import CellGrid exposing(..)
 > import Array exposing(Array)
 ```
