@@ -178,7 +178,8 @@ indexedMap f (CellGrid dimensions cells) =
 
 
 {-| Modify a cell while having access to the full cell grid.
-The supplied cell grid is always the original input. Useful for simulations that need neigbor information, like [Conway's game of life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life).
+The supplied cell grid is always the original input. Useful for simulations that need neighbor information,
+like [Conway's game of life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life).
 -}
 transform : (Int -> Int -> CellGrid a -> b) -> CellGrid a -> CellGrid b
 transform newCellValue ((CellGrid dimensions elements) as grid) =
@@ -197,6 +198,8 @@ transform newCellValue ((CellGrid dimensions elements) as grid) =
     Array.foldl folder ( 0, 0, Array.empty ) elements
         |> (\( _, _, value ) -> value)
         |> CellGrid dimensions
+
+
 
 
 {-| Get the list of cell values of the eight neighboring cells.
