@@ -171,3 +171,9 @@ CellGrid.WebGL.meshToHtml 700 700 (testMesh 200 0.04)
 ```
 
 The value `testMesh 200 0.04` is a mesh.
+
+
+## Credits
+
+Many thanks to Folkert deVries for code optimizations and API improvements, 
+including the `CellGrid.Image` module.
