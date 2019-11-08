@@ -5,14 +5,14 @@ a rectangular grid of cells.  The grid can be rendered as
 HTML, SVG, or WebGL.  In the HTML and SVG versions, the grid responds to
 mouse clicks.  Here is the type definition:
 
-```
+```elm
 type CellGrid a
     = CellGrid ( Int, Int ) (Array a)
 ```
 
 Thus
 
-```
+```elm
 cg = CellGrid (2,3) (Array Int)
 ```
 
@@ -23,25 +23,25 @@ There are two on-line demo applications: [Conway's game of life](https://jxxcarl
 of heat conduction](https://jxxcarlson.github.io/app/heat-model.html).  See the `examples` folder on [GitHub](https://github.com/jxxcarlson/elm-cell-grid)
 for the code. In the first example, we use the type
 
-```
+```elm
 CellGrid State,
 ```
 where
 
-```
+```elm
 type State = Occupied | Unoccupied
 ```
 
 In the second, we use
 
-```
+```elm
 CellGrid Float
 ```
 In this case, the contents of a cell represents
 its temperature. One can create a CellGrid, transform it, and render as SVG
 HTML, or WebGL.  Note the type
 
-```
+```elm
 type Msg = MouseClick (Int, Int) (Float, Float)
 ```
 
@@ -60,18 +60,18 @@ to see how this message is used to respond to user clicks.
 In the example below, we create a 2x2 `CellGrid Float`.
 
 
-````
+````bash
 > import CellGrid exposing(..)
 > import Array exposing(Array)
 ```
 
-```
+```elm
 > cells = Array.fromList [1.0,2.0,3.0,4.0]
 Array.fromList [1,2,3,4]
     : Array Float
 ```
 
-```
+```bash
 > cg = CellGrid (2,2) cells
 CellGrid (2,2) (Array.fromList [1,2,3,4])
     : CellGrid Float
@@ -80,7 +80,7 @@ CellGrid (2,2) (Array.fromList [1,2,3,4])
 Elements of a `CellGrid` can be accessed as one expects
 in a 2D array:
 
-```
+```bash
 > cellAtMatrixIndex (1,1) cg
 Just 4 : Maybe Float
 ```
@@ -89,7 +89,7 @@ Just 4 : Maybe Float
 
 Render a `CellGrid` using the function
 
-```
+```elm
 asHtml : Int -> Int ->  CellRenderer a
                -> CellGrid a -> Html msg
 ```
@@ -98,7 +98,7 @@ where the first two parameters are the width and
 height of the rendered Cellgrid in pixels,
 and where the third defines how a cell is rndered:
 
-```
+```elm
 type alias CellRenderer a = {
        cellSize : Float
      , gridLineWidth : Float
@@ -112,7 +112,7 @@ type alias CellRenderer a = {
 A `ColorValue` is a type alias for `String`.  Here is a typical
 `CellRenderer`:
 
-```
+```elm
 type alias CellRenderer a = {
        cellSize : Float
      , gridLineWidth : Float
@@ -132,7 +132,7 @@ By using cellColorizers, one can render any kind of CellGrid.
 For example, in Conway's Game of Life,  one  uses the function
 
 
-```
+```elm
 cellrenderer : CellRenderer Float
 cellrenderer =
     {
@@ -149,7 +149,7 @@ cellrenderer =
 Please consult `./examples/HeatMap2.elm`.
 One uses
 
-```
+```elm
 CellGrid.WebGL.asHtml 700 700
    (testGrid ( 200, 200 )) colorMap
 ```
@@ -158,7 +158,7 @@ to render the 200x200 CellGrid `testGrid ( 200, 200 )`.
 The `colorMap` function transforms scalars (Float),
 to color vectors (Vec3).  Here is a simple example:
 
-```
+```elm
 colorMap : Float -> Vec3
 colorMap t =
     vec3 t 0 0
@@ -166,7 +166,7 @@ colorMap t =
 
 It is also possible to render a mesh, as in  `./examples/HeatMap.elm`:
 
-```
+```elm
 CellGrid.WebGL.meshToHtml 700 700 (testMesh 200 0.04)
 ```
 
