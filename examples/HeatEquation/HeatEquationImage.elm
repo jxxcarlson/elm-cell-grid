@@ -21,10 +21,25 @@ import TemperatureField
 import Time exposing (Posix)
 
 
+{-| The tickInterval has to be large enough
+for the app to display the updated heatMath
+in real time.  The following values work
+on the test computer.  However, the
+tickInterval is not necessarily
+optimal for the given size
+
+   size = 50, tickInterval = 50
+   size = 100, tickInterval = 100
+   size = 150, tickInterval = 200
+
+The parameters should depend on processor
+speed.
+
+-}
 config = {
      size = 100
    , displayWidth = 600
-   , tickInterval = 50}
+   , tickInterval = 100}
 
 
 
@@ -192,13 +207,14 @@ mainColumn model =
 
 render : CellGrid Float -> Element msg
 render cg =
-    Element.image
-        [ Element.htmlAttribute <| Html.Attributes.width (config.displayWidth)
-        , Element.htmlAttribute <| Html.Attributes.height (config.displayWidth)
-        , Element.htmlAttribute <| Html.Attributes.style "image-rendering" "pixelated"
-        ]
-        {src = (CellGrid.Image.asBmpUri (CellGrid.map colorMap cg))
-        , description = "Heatmap"}
+   Element.image
+         [ Element.width (Element.px config.displayWidth)
+         , Element.height (Element.px config.displayWidth)
+         , Element.htmlAttribute <| Html.Attributes.style "image-rendering" "pixelated"
+         ]
+         { src = CellGrid.Image.asBmpUri (CellGrid.map colorMap cg)
+         , description = "Heatmap"
+         }
 
 
 colorMap : Float -> Color.Color
