@@ -35,13 +35,13 @@ grid =
 
         initializer : Int -> Int -> Color
         initializer i j =
-            colorAtMatrixIndex dimensions (Position i j)
+            colorAtPosition dimensions (Position i j)
     in
     CellGrid.initialize dimensions initializer
 
 
-colorAtMatrixIndex : Dimensions -> Position -> Color
-colorAtMatrixIndex dimensions position =
+colorAtPosition : Dimensions -> Position -> Color
+colorAtPosition dimensions position =
     let
         -- a number in [0,1]
         x =

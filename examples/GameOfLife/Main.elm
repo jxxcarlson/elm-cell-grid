@@ -16,7 +16,6 @@ import Element.Background as Background
 import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
-import Html.Events.Extra.Mouse as Mouse
 import Random
 import Time exposing (Posix)
 

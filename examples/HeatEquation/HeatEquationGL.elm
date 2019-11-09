@@ -15,7 +15,6 @@ import Element.Background as Background
 import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
-import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import TemperatureField
 import Time exposing (Posix)
 
@@ -179,13 +178,19 @@ mainColumn model =
                 , row [ spacing 8 ] [ stepButton, counterDisplay model ]
                 , inputBeta model
                 ]
-            , el [ Font.size 14, centerX, Font.color <| gray 0.5 ] (text "WebGL version, grid = 100x100; Run with 0 < beta < 1.0")
+            , el [ Font.size 14, centerX, Font.color <| gray 0.5 ] (text legend)
             , Element.newTabLink [ Font.size 14, centerX, Font.color <| Element.rgb 0.4 0.4 1 ]
                 { url = "https://github.com/jxxcarlson/elm-cell-grid/tree/master/examples/HeatEquation"
                 , label = el [] (text "Code on GitHub")
                 }
             ]
         ]
+
+legend  =
+    let
+      n =   String.fromInt config.gridWidth
+    in
+      "WebGL version, grid = " ++ n ++ "x" ++ n ++ "; interval = " ++ String.fromInt config.tickInterval ++ "ms; run with 0 < beta < 1.0"
 
 
 colorMap : Float -> Color.Color

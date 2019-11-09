@@ -25,8 +25,8 @@ type alias Config = {
   }
 
 config = {
-     tickInterval = 333
-   , gridWidth = 70
+     tickInterval = 20
+   , gridWidth = 60
   }
 
 
@@ -208,13 +208,19 @@ mainColumn model =
                 , row [ spacing 8 ] [ stepButton, counterDisplay model ]
                 , inputBeta model
                 ]
-            , el [ Font.size 14, centerX, Font.color <| gray 0.5 ] (text "Run with 0 < beta < 1.0")
+            , el [ Font.size 14, centerX, Font.color <| gray 0.5 ] (text legend)
             , Element.newTabLink [ Font.size 14, centerX, Font.color <| Element.rgb 0.4 0.4 1 ]
                 { url = "https://github.com/jxxcarlson/elm-cell-grid/tree/master/examples/HeatEquation"
                 , label = el [] (text "Code on GitHub")
                 }
             ]
         ]
+
+legend  =
+    let
+      n =   String.fromInt config.gridWidth
+    in
+      "WebGL version, grid = " ++ n ++ "x" ++ n ++ "; interval = " ++ String.fromInt config.tickInterval ++ "ms; run with 0 < beta < 1.0"
 
 
 gray g =
@@ -305,7 +311,7 @@ appStateAsString : AppState -> String
 appStateAsString appState =
     case appState of
         Ready ->
-            "Ready"
+            "Run"
 
         Running ->
             "Running"
