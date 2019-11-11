@@ -144,6 +144,6 @@ The `Image` type is defined in the package `justgook/elm-image`.
 
 ## Credits
 
-Many thanks to Folkert deVries for code optimizations and API improvements, 
+Many thanks to Folkert de Vries for code optimizations and API improvements, 
 including the new `CellGrid.Image` module which
 gives the fastest of the rendering options.

@@ -19,30 +19,27 @@ import Html exposing (Html)
 import Random
 import Time exposing (Posix)
 
+type alias Config = {
+  tickInterval : Float
+  , initialDensity : Float
+  , initialSeed : Int
+  , gridWidth : Int
+  , gridDisplayWidth : Float
+  , lowDensityThreshold : Float
+  }
 
-tickInterval : Float
-tickInterval =
-    333
-
-
-initialDensity =
-    0.3
-
-
-initialSeed =
-    3771
-
-
-gridWidth =
-    100
-
-
-gridDisplayWidth =
-    450.0
+config : Config
+config = {
+  tickInterval = 100
+  , initialDensity = 0.3
+  , initialSeed = 3771
+  , gridWidth = 100
+  , gridDisplayWidth = 420
+  , lowDensityThreshold = 0.0
+  }
 
 
-lowDensityThreshold =
-    0.0
+
 
 
 main =
@@ -61,7 +58,9 @@ type alias Model =
     , trial : Int
     , appState : AppState
     , density : Float
+    , gridWidth : Int
     , densityString : String
+    , gridWidthString : String
     , currentDensity : Float
     , seed : Int
     , seedString : String
@@ -87,6 +86,7 @@ type Msg
     = NoOp
     | InputBeta String
     | InputSeed String
+    | InputGridWidth String
     | Step
     | Tick Posix
     | AdvanceAppState
@@ -106,13 +106,15 @@ init flags =
       , counter = 0
       , trial = 0
       , appState = Ready
-      , density = initialDensity
-      , densityString = String.fromFloat initialDensity
-      , currentDensity = initialDensity
-      , seed = initialSeed
-      , seedString = String.fromInt initialSeed
+      , density = config.initialDensity
+      , densityString = String.fromFloat config.initialDensity
+      , gridWidth = config.gridWidth
+      , gridWidthString = String.fromInt config.gridWidth
+      , currentDensity = config.initialDensity
+      , seed = config.initialSeed
+      , seedString = String.fromInt config.initialSeed
       , randomPosition = Position 0 0
-      , cellMap = initialCellGrid initialSeed initialDensity
+      , cellMap = initialCellGrid config.initialSeed config.initialDensity
       , message = "Click to make cell."
       }
     , Cmd.none
@@ -121,11 +123,11 @@ init flags =
 
 initialCellGrid : Int -> Float -> CellGrid State
 initialCellGrid seed density =
-    Conway.new seed density (Dimensions gridWidth gridWidth)
+    Conway.new seed density (Dimensions config.gridWidth  config.gridWidth)
 
 
 subscriptions model =
-    Time.every tickInterval Tick
+    Time.every config.tickInterval Tick
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -141,6 +143,23 @@ update msg model =
 
                 Just density_ ->
                     ( { model | densityString = str, density = density_ }, Cmd.none )
+
+
+        InputGridWidth str ->
+                    case String.toInt str of
+                        Nothing ->
+                            ( { model | gridWidthString = str }, Cmd.none )
+
+                        Just gridWidth_ ->
+                            let
+                              (gridWidthString__, gridWidth__) =
+                                  if gridWidth_ <= 100 then
+                                     (str, gridWidth_)
+                                  else
+                                    ("100", 100)
+                              newModel = { model | gridWidthString = gridWidthString__, gridWidth =  gridWidth__ }
+                            in
+                              reset newModel
 
         InputSeed str ->
             case String.toInt str of
@@ -161,7 +180,7 @@ update msg model =
                         , cellMap = Conway.step model.cellMap |> generateNewLife model
                         , currentDensity = currentDensity model
                       }
-                    , Random.generate NewPosition generatePosition
+                    , Random.generate NewPosition (generatePosition model)
                     )
 
                 False ->
@@ -183,14 +202,7 @@ update msg model =
             ( { model | appState = nextAppState }, Cmd.none )
 
         Reset ->
-            ( { model
-                | counter = 0
-                , trial = model.trial + 1
-                , appState = Ready
-                , cellMap = initialCellGrid (model.seed + model.trial + 1) model.density
-              }
-            , Cmd.none
-            )
+            reset model
 
         NewPosition position ->
             ( { model | randomPosition = position }, Cmd.none )
@@ -214,9 +226,19 @@ update msg model =
             )
 
 
+reset model =
+    ( { model
+        | counter = 0
+        , trial = model.trial + 1
+        , appState = Ready
+        , cellMap = initialCellGrid (model.seed + model.trial + 1) model.density
+      }
+    , Cmd.none
+    )
+
 generateNewLife : Model -> CellGrid State -> CellGrid State
 generateNewLife model cg =
-    case model.currentDensity < lowDensityThreshold of
+    case model.currentDensity < config.lowDensityThreshold of
         False ->
             cg
 
@@ -224,9 +246,9 @@ generateNewLife model cg =
             Conway.occupy model.randomPosition cg
 
 
-generatePosition : Random.Generator Position
-generatePosition =
-    Random.map2 Position (Random.int 0 (gridWidth - 1)) (Random.int 0 (gridWidth - 1))
+generatePosition : Model -> Random.Generator Position
+generatePosition model =
+    Random.map2 Position (Random.int 0 ( model.gridWidth - 1)) (Random.int 0 ( model.gridWidth - 1))
 
 
 
@@ -244,9 +266,9 @@ mainColumn : Model -> Element Msg
 mainColumn model =
     column mainColumnStyle
         [ column [ centerX, spacing 20 ]
-            [ title <| "Conway's Game of Life (" ++ String.fromInt gridWidth ++ ", " ++ String.fromInt gridWidth ++ ")"
+            [ title <| "Conway's Game of Life (" ++ String.fromInt  model.gridWidth ++ ", " ++ String.fromInt  model.gridWidth ++ ")"
             , el [ centerX ]
-                (CellGrid.Render.asHtml { width = round gridDisplayWidth, height = round gridDisplayWidth } cellStyle model.cellMap
+                (CellGrid.Render.asHtml { width = round config.gridDisplayWidth, height = round config.gridDisplayWidth } (cellStyle model) model.cellMap
                     |> Element.html
                     |> Element.map CellGrid
                 )
@@ -255,6 +277,7 @@ mainColumn model =
                 , runButton model
                 , row [ spacing 8 ] [ stepButton, counterDisplay model ]
                 , inputDensity model
+                , inputGridSize model
                 ]
             , row [ Font.size 14, centerX, spacing 24 ]
                 [ el [ width (px 150), Font.color light ] (text <| "Current density = " ++ String.fromFloat model.currentDensity)
@@ -268,12 +291,6 @@ mainColumn model =
         ]
 
 
-
---onMouseClick : Attribute Msg
---onMouseClick =
---    Mouse.onClick (.clientPos >> MouseClick)
-
-
 currentDensity : Model -> Float
 currentDensity model =
     let
@@ -281,7 +298,7 @@ currentDensity model =
             Conway.occupied model.cellMap |> toFloat
 
         capacity =
-            gridWidth * gridWidth |> toFloat
+             config.gridWidth *  config.gridWidth |> toFloat
     in
     population / capacity |> roundTo 2
 
@@ -296,36 +313,21 @@ roundTo places x =
 
 
 
---cellrenderer1 =
---    { cellSize = gridDisplayWidth / toFloat gridWidth
---    , cellColorizer =
---        \state ->
---            case state of
---                Occupied ->
---                    Color.rgb 0 0 1
---
---                Unoccupied ->
---                    Color.rgb 0 0 0
---    , defaultColor = Color.rgb 0 0 0
---    , gridLineWidth = 0.5
---    , gridLineColor = Color.rgb 0 0 1
---    }
-
-
-cellStyle : CellStyle State
-cellStyle =
+cellStyle : Model -> CellStyle State
+cellStyle model =
     { toColor =
         \b ->
             case b of
                 Occupied ->
-                    Color.blue
+                    Color.rgb 0.0 0.0 0.9
 
                 Unoccupied ->
-                    Color.black
-    , cellWidth = 10
-    , cellHeight = 10
+                    Color.rgb 0.0 0.0 0.3
+
+    , cellWidth = config.gridDisplayWidth / (toFloat model.gridWidth)
+    , cellHeight = config.gridDisplayWidth / (toFloat model.gridWidth)
     , gridLineWidth = 0.5
-    , gridLineColor = Color.rgb 0.4 0.4 0.4
+    , gridLineColor = Color.rgb 0.2 0.2 0.3
     }
 
 
@@ -356,6 +358,15 @@ inputDensity model =
         , text = model.densityString
         , placeholder = Nothing
         , label = Input.labelLeft [] <| el [ Font.size buttonFontSize, moveDown 8.5, Font.color light ] (text "Initial density ")
+        }
+
+inputGridSize : Model -> Element Msg
+inputGridSize model =
+    Input.text [ width (px 60), height (px 30), Font.size buttonFontSize, Background.color light ]
+        { onChange = InputGridWidth
+        , text = model.gridWidthString
+        , placeholder = Nothing
+        , label = Input.labelLeft [] <| el [ Font.size buttonFontSize, moveDown 8.5, Font.color light ] (text "Grid size ")
         }
 
 

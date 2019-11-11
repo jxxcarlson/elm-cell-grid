@@ -7,3 +7,6 @@ index.html
 examples/HeatEquation/heat-model-gl.html
 examples/HeatEquation/heat-model.html
 examples/HeatEquation/publish.sh
+examples/GameOfLife/publish.sh
+examples/HeatEquation/heat-model-image.html
+tests/VerifyExamples/
