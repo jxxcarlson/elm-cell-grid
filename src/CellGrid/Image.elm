@@ -58,14 +58,14 @@ toImage grid =
 -}
 asBmpBytes : CellGrid Color -> Bytes
 asBmpBytes =
-    Image.encodeBmp << toImage
+    Image.toBmp << toImage
 
 
 {-| Encode a `CellGrid` as a png image.
 -}
 asPngBytes : CellGrid Color -> Bytes
 asPngBytes =
-    Image.encodePng << toImage
+    Image.toPng << toImage
 
 
 {-| Encode a `CellGrid` as a bmp URI.
