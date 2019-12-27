@@ -187,14 +187,11 @@ suite =
                 \_ ->
                     let
                         cg =
-                            Debug.log "CG" <|
-                                CellGrid.initialize (Dimensions 2 3) (\i j -> toFloat (i + j))
+                            CellGrid.initialize (Dimensions 2 3) (\i j -> toFloat (i + j))
 
                         temperature =
-                            Debug.log "T" <|
-                                (CellGrid.get (Position 1 2) cg
-                                    |> Maybe.withDefault -1
-                                )
+                            CellGrid.get (Position 1 2) cg
+                                |> Maybe.withDefault -1
                     in
                     Expect.equal temperature 3.0
             , test "initialize full" <|
